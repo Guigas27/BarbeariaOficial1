@@ -1,0 +1,20 @@
+{
+  "name": "barbearia-presenca",
+  "version": "1.0.0",
+  "description": "Sistema de agendamento para Barbearia Presença",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["barbearia", "agendamento"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
