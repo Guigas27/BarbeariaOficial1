@@ -13,10 +13,10 @@ export class MeusAgendamentosPage {
   async render() {
     this.container.innerHTML = `
       <div class="main-content">
-        <div class="container" style="padding-top: 40px; padding-bottom: 40px;">
+        <div class="container" style="padding-top: clamp(20px, 5vw, 40px); padding-bottom: clamp(20px, 5vw, 40px);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
-            <h1 style="font-size: 32px; color: var(--primary-gold);">Meus Agendamentos</h1>
-            <a href="#/agendar" class="btn btn-primary">
+            <h1 style="font-size: clamp(24px, 6vw, 32px); color: var(--primary-gold); margin: 0;">Meus Agendamentos</h1>
+            <a href="#/agendar" class="btn btn-primary" style="font-size: clamp(13px, 3vw, 14px); white-space: nowrap;">
               + Novo Agendamento
             </a>
           </div>

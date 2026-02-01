@@ -19,8 +19,8 @@ export class AgendarPage {
   async render() {
     this.container.innerHTML = `
       <div class="main-content">
-        <div class="container" style="max-width: 900px; padding-top: 40px; padding-bottom: 40px;">
-          <h1 style="font-size: 32px; margin-bottom: 32px; text-align: center; color: var(--primary-gold);">
+        <div class="container" style="max-width: 900px; padding-top: clamp(20px, 5vw, 40px); padding-bottom: clamp(20px, 5vw, 40px);">
+          <h1 style="font-size: clamp(24px, 6vw, 32px); margin-bottom: 32px; text-align: center; color: var(--primary-gold);">
             Novo Agendamento
           </h1>
 

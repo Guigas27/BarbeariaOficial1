@@ -16,12 +16,12 @@ export class AdminPage {
       <div class="main-content">
         <div class="container" style="padding-top: 40px; padding-bottom: 40px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
-            <h1 style="font-size: 32px; color: var(--primary-gold);">Área do Barbeiro</h1>
-            <div style="display: flex; gap: 12px;">
-              <button class="btn ${this.view === 'calendar' ? 'btn-primary' : 'btn-secondary'}" id="viewCalendarBtn">
+            <h1 style="font-size: clamp(24px, 6vw, 32px); color: var(--primary-gold); margin: 0;">Área do Barbeiro</h1>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%; max-width: 300px;">
+              <button class="btn ${this.view === 'calendar' ? 'btn-primary' : 'btn-secondary'}" id="viewCalendarBtn" style="flex: 1; min-width: 120px; font-size: clamp(13px, 3vw, 14px);">
                 📅 Calendário
               </button>
-              <button class="btn ${this.view === 'list' ? 'btn-primary' : 'btn-secondary'}" id="viewListBtn">
+              <button class="btn ${this.view === 'list' ? 'btn-primary' : 'btn-secondary'}" id="viewListBtn" style="flex: 1; min-width: 120px; font-size: clamp(13px, 3vw, 14px);">
                 📋 Lista
               </button>
             </div>
@@ -102,6 +102,11 @@ export class AdminPage {
   renderStats() {
     const container = document.getElementById('statsContainer')
     
+    if (!container) {
+      console.error('Container de estatísticas não encontrado')
+      return
+    }
+    
     const ativos = this.agendamentos.filter(ag => ag.status === 'ativo').length
     const concluidos = this.agendamentos.filter(ag => ag.status === 'concluido').length
     const totalFaturamento = this.agendamentos
@@ -111,27 +116,27 @@ export class AdminPage {
     container.innerHTML = `
       <div class="grid grid-3">
         <div class="card" style="text-align: center;">
-          <div style="font-size: 36px; margin-bottom: 8px;">📊</div>
-          <div style="font-size: 32px; font-weight: 700; color: var(--primary-gold); margin-bottom: 4px;">
+          <div style="font-size: clamp(28px, 6vw, 36px); margin-bottom: 8px;">📊</div>
+          <div style="font-size: clamp(24px, 6vw, 32px); font-weight: 700; color: var(--primary-gold); margin-bottom: 4px;">
             ${ativos}
           </div>
-          <div style="color: var(--text-secondary);">Agendamentos Ativos</div>
+          <div style="color: var(--text-secondary); font-size: clamp(12px, 3vw, 14px);">Agendamentos Ativos</div>
         </div>
 
         <div class="card" style="text-align: center;">
-          <div style="font-size: 36px; margin-bottom: 8px;">✅</div>
-          <div style="font-size: 32px; font-weight: 700; color: var(--success); margin-bottom: 4px;">
+          <div style="font-size: clamp(28px, 6vw, 36px); margin-bottom: 8px;">✅</div>
+          <div style="font-size: clamp(24px, 6vw, 32px); font-weight: 700; color: var(--success); margin-bottom: 4px;">
             ${concluidos}
           </div>
-          <div style="color: var(--text-secondary);">Concluídos</div>
+          <div style="color: var(--text-secondary); font-size: clamp(12px, 3vw, 14px);">Concluídos</div>
         </div>
 
         <div class="card" style="text-align: center;">
-          <div style="font-size: 36px; margin-bottom: 8px;">💰</div>
-          <div style="font-size: 28px; font-weight: 700; color: var(--primary-gold); margin-bottom: 4px;">
+          <div style="font-size: clamp(28px, 6vw, 36px); margin-bottom: 8px;">💰</div>
+          <div style="font-size: clamp(20px, 5vw, 28px); font-weight: 700; color: var(--primary-gold); margin-bottom: 4px;">
             ${formatarValor(totalFaturamento)}
           </div>
-          <div style="color: var(--text-secondary);">Receita do Mês</div>
+          <div style="color: var(--text-secondary); font-size: clamp(12px, 3vw, 14px);">Receita do Mês</div>
         </div>
       </div>
     `
@@ -144,10 +149,10 @@ export class AdminPage {
 
     container.innerHTML = `
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <button class="btn btn-secondary" id="prevMonth">◀ Mês Anterior</button>
-          <h2>${this.getMonthName(month)} ${year}</h2>
-          <button class="btn btn-secondary" id="nextMonth">Próximo Mês ▶</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" id="prevMonth" style="flex: 1; min-width: 100px; font-size: clamp(12px, 2.5vw, 14px); padding: 8px 12px;">◀ Anterior</button>
+          <h2 style="font-size: clamp(18px, 4vw, 24px); margin: 0;">${this.getMonthName(month)} ${year}</h2>
+          <button class="btn btn-secondary" id="nextMonth" style="flex: 1; min-width: 100px; font-size: clamp(12px, 2.5vw, 14px); padding: 8px 12px;">Próximo ▶</button>
         </div>
         <div id="agendamentosDoMes"></div>
       </div>
@@ -234,23 +239,23 @@ export class AdminPage {
 
     container.innerHTML = `
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <button class="btn btn-secondary" id="prevMonth">◀ Mês Anterior</button>
-          <h2>${this.getMonthName(month)} ${year}</h2>
-          <button class="btn btn-secondary" id="nextMonth">Próximo Mês ▶</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" id="prevMonth" style="flex: 1; min-width: 100px; font-size: clamp(12px, 2.5vw, 14px); padding: 8px 12px;">◀ Anterior</button>
+          <h2 style="font-size: clamp(18px, 4vw, 24px); margin: 0;">${this.getMonthName(month)} ${year}</h2>
+          <button class="btn btn-secondary" id="nextMonth" style="flex: 1; min-width: 100px; font-size: clamp(12px, 2.5vw, 14px); padding: 8px 12px;">Próximo ▶</button>
         </div>
 
         <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse;">
+          <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
             <thead>
               <tr style="border-bottom: 2px solid var(--border-color);">
-                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Data</th>
-                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Horário</th>
-                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Cliente</th>
-                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Serviço</th>
-                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Valor</th>
-                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Status</th>
-                <th style="padding: 12px; text-align: center; color: var(--text-secondary);">Ações</th>
+                <th style="padding: 12px; text-align: left; color: var(--text-secondary); font-size: clamp(12px, 2.5vw, 14px);">Data</th>
+                <th style="padding: 12px; text-align: left; color: var(--text-secondary); font-size: clamp(12px, 2.5vw, 14px);">Horário</th>
+                <th style="padding: 12px; text-align: left; color: var(--text-secondary); font-size: clamp(12px, 2.5vw, 14px);">Cliente</th>
+                <th style="padding: 12px; text-align: left; color: var(--text-secondary); font-size: clamp(12px, 2.5vw, 14px);">Serviço</th>
+                <th style="padding: 12px; text-align: left; color: var(--text-secondary); font-size: clamp(12px, 2.5vw, 14px);">Valor</th>
+                <th style="padding: 12px; text-align: left; color: var(--text-secondary); font-size: clamp(12px, 2.5vw, 14px);">Status</th>
+                <th style="padding: 12px; text-align: center; color: var(--text-secondary); font-size: clamp(12px, 2.5vw, 14px);">Ações</th>
               </tr>
             </thead>
             <tbody id="agendamentosTable">

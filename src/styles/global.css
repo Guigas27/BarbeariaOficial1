@@ -190,6 +190,31 @@ body {
   font-size: 24px;
 }
 
+/* Menu toggle button (mobile) */
+.btn-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--primary-gold);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-menu:hover {
+  background: var(--background-card-hover);
+}
+
+@media (max-width: 768px) {
+  .btn-menu {
+    display: flex;
+  }
+}
+
 /* Navigation */
 .nav-menu {
   display: flex;
@@ -602,14 +627,30 @@ body {
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    width: 100%;
+    max-width: 280px;
+    z-index: 200;
   }
 
   .sidebar.open {
     transform: translateX(0);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
   }
 
   .main-content {
     margin-left: 0;
+  }
+
+  .header {
+    padding: 12px 16px;
+  }
+
+  .logo {
+    font-size: 16px;
+  }
+
+  .logo-icon {
+    font-size: 20px;
   }
 
   .grid-2,
@@ -618,16 +659,165 @@ body {
   }
 
   .container {
-    padding: 16px;
+    padding: 12px;
   }
 
   .modal {
-    padding: 20px;
+    padding: 16px;
+    margin: 16px;
+    max-width: calc(100% - 32px);
+  }
+
+  .modal-title {
+    font-size: 20px;
   }
 
   .steps {
     overflow-x: auto;
     padding-bottom: 10px;
+    gap: 12px;
+  }
+
+  .steps::before {
+    display: none;
+  }
+
+  .step {
+    flex-shrink: 0;
+  }
+
+  .step-circle {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .step-label {
+    font-size: 11px;
+    max-width: 70px;
+  }
+
+  .time-slots {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+  }
+
+  .time-slot {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  .service-card {
+    padding: 16px;
+  }
+
+  .service-name {
+    font-size: 16px;
+  }
+
+  .service-price {
+    font-size: 20px;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .calendar-day {
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  /* Ajustes para header mobile */
+  .header {
+    position: sticky;
+    top: 0;
+    background: var(--background-card);
+    z-index: 100;
+  }
+
+  .btn-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--primary-gold);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-menu:hover {
+    background: var(--background-card-hover);
+  }
+
+  /* Tabelas responsivas */
+  table {
+    font-size: 14px;
+  }
+
+  table th,
+  table td {
+    padding: 8px !important;
+  }
+
+  /* Input groups em mobile */
+  .input-group input,
+  .input-group textarea,
+  .input-group select {
+    font-size: 16px; /* Evita zoom automático no iOS */
+  }
+
+  /* Melhorar espaçamento dos botões */
+  .flex-between {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  /* Cards de estatísticas */
+  .grid.grid-3 > .card {
+    padding: 20px 16px;
+  }
+
+  /* Ajustar títulos */
+  h1 {
+    font-size: 24px !important;
+  }
+
+  h2 {
+    font-size: 20px !important;
+  }
+
+  h3 {
+    font-size: 18px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo span:last-child {
+    display: none; /* Esconder texto do logo em telas muito pequenas */
+  }
+
+  .time-slots {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .calendar-day {
+    font-size: 12px;
+    min-height: 36px;
   }
 
   .step-label {
@@ -635,8 +825,59 @@ body {
     max-width: 60px;
   }
 
-  .time-slots {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  .service-card {
+    padding: 12px;
+  }
+
+  .modal {
+    padding: 12px;
+    margin: 12px;
+  }
+
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* Admin area específico para mobile pequeno */
+  h1 {
+    font-size: 20px !important;
+  }
+
+  h2 {
+    font-size: 16px !important;
+  }
+
+  /* Botões de navegação de mês mais compactos */
+  .btn-secondary {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Cards de stats com padding menor */
+  .grid.grid-3 > .card {
+    padding: 16px 12px !important;
+  }
+
+  /* Tabelas com fonte menor */
+  table {
+    font-size: 12px !important;
+  }
+
+  table th,
+  table td {
+    padding: 6px !important;
+  }
+
+  /* Ajustar cards de agendamento */
+  .card {
+    padding: 12px !important;
+  }
+
+  /* Botões em cards de agendamento */
+  .card button {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
   }
 }
 
