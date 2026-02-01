@@ -14,6 +14,7 @@ export class AgendarPage {
       observacoes: ''
     }
     this.horariosOcupados = []
+    this.todosAgendamentos = [] // Armazena todos os agendamentos do mês
   }
 
   async render() {
@@ -93,14 +94,43 @@ export class AgendarPage {
         <div class="service-price">${formatarValor(servico.valor)}</div>
       `
       
-      card.addEventListener('click', () => {
+      card.addEventListener('click', async () => {
         this.agendamento.servico = servico
+        
+        // Carregar todos os agendamentos do próximo mês para poder bloquear dias
+        await this.carregarAgendamentosDoMes()
+        
         this.currentStep = 2
         this.renderStep()
       })
       
       grid.appendChild(card)
     })
+  }
+
+  async carregarAgendamentosDoMes() {
+    const hoje = new Date()
+    const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0) // Último dia do próximo mês
+    
+    // Carregar agendamentos dos próximos 2 meses
+    const year = hoje.getFullYear()
+    const month1 = hoje.getMonth() + 1
+    const month2 = hoje.getMonth() + 2
+    
+    try {
+      const [result1, result2] = await Promise.all([
+        agendamentoService.getByMonth(year, month1),
+        agendamentoService.getByMonth(month2 > 12 ? year + 1 : year, month2 > 12 ? month2 - 12 : month2)
+      ])
+      
+      this.todosAgendamentos = [
+        ...(result1.data || []),
+        ...(result2.data || [])
+      ]
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos:', error)
+      this.todosAgendamentos = []
+    }
   }
 
   renderStepData(container) {
@@ -117,15 +147,40 @@ export class AgendarPage {
     `
 
     const calendarContainer = document.getElementById('calendar')
+    
+    // Função para verificar se um dia tem horários disponíveis
+    const checkAvailability = (dateStr) => {
+      const todosHorarios = gerarHorariosDisponiveis(dateStr, this.agendamento.servico.duracao)
+      
+      if (todosHorarios.length === 0) {
+        return false
+      }
+
+      // Filtrar agendamentos desta data específica
+      const agendamentosDoDia = this.todosAgendamentos.filter(ag => {
+        return ag.data === dateStr && ag.status === 'ativo'
+      })
+
+      // Verificar se há pelo menos um horário livre
+      const horariosLivres = todosHorarios.filter(slot => {
+        const isOcupado = agendamentosDoDia.some(ag => {
+          return ag.horario_inicio === slot.inicio
+        })
+        return !isOcupado
+      })
+
+      return horariosLivres.length > 0
+    }
+    
     const calendar = new Calendar(calendarContainer, async (date) => {
       this.agendamento.data = date
       
-      // Carregar horários ocupados
+      // Carregar horários ocupados da data selecionada
       await this.carregarHorariosOcupados(date)
       
       this.currentStep = 3
       this.renderStep()
-    })
+    }, checkAvailability)
     
     if (this.agendamento.data) {
       calendar.setDate(this.agendamento.data)
@@ -150,6 +205,15 @@ export class AgendarPage {
       this.agendamento.servico.duracao
     )
 
+    // Filtrar horários que já estão ocupados
+    const horariosLivres = horariosDisponiveis.filter(slot => {
+      // Verificar se este horário está ocupado
+      const isOcupado = this.horariosOcupados.some(ag => {
+        return ag.horario_inicio === slot.inicio
+      })
+      return !isOcupado
+    })
+
     container.innerHTML = `
       <div>
         <h2 style="margin-bottom: 8px; text-align: center;">Escolha o Horário</h2>
@@ -167,38 +231,30 @@ export class AgendarPage {
 
     const slotsContainer = document.getElementById('timeSlots')
 
-    if (horariosDisponiveis.length === 0) {
+    if (horariosLivres.length === 0) {
       slotsContainer.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">📅</div>
           <div class="empty-state-title">Sem horários disponíveis</div>
-          <div class="empty-state-text">Escolha outra data</div>
+          <div class="empty-state-text">Todos os horários deste dia já foram preenchidos. Escolha outra data.</div>
         </div>
       `
     } else {
-      horariosDisponiveis.forEach(slot => {
-        const isOcupado = this.horariosOcupados.some(ag => {
-          return ag.horario_inicio === slot.inicio
-        })
-
+      horariosLivres.forEach(slot => {
         const slotElement = document.createElement('div')
         slotElement.className = 'time-slot'
         
-        if (isOcupado) {
-          slotElement.classList.add('occupied')
-        } else if (this.agendamento.horario?.inicio === slot.inicio) {
+        if (this.agendamento.horario?.inicio === slot.inicio) {
           slotElement.classList.add('selected')
         }
 
         slotElement.textContent = slot.inicio
         
-        if (!isOcupado) {
-          slotElement.addEventListener('click', () => {
-            this.agendamento.horario = slot
-            this.currentStep = 4
-            this.renderStep()
-          })
-        }
+        slotElement.addEventListener('click', () => {
+          this.agendamento.horario = slot
+          this.currentStep = 4
+          this.renderStep()
+        })
 
         slotsContainer.appendChild(slotElement)
       })

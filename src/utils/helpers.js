@@ -12,22 +12,26 @@ export const SERVICOS = [
 export const HORARIOS_FIXOS = {
   4: [ // Quinta-feira
     { nome: 'Beiço', inicio: '11:00', fim: '11:30' },
-    { nome: 'Marquinhos', inicio: '16:00', fim: '17:00' },
-    { nome: 'Leo', inicio: '19:00', fim: '20:00' }
+    { nome: 'Marquinhos', inicio: '19:00', fim: '20:00' },
+    { nome: 'Leo', inicio: '10:00', fim: '11:00' }
   ],
   5: [ // Sexta-feira
     { nome: 'Alessandro', inicio: '09:00', fim: '10:00' },
     { nome: 'Gu', inicio: '15:00', fim: '16:00' },
     { nome: 'Jo', inicio: '17:00', fim: '18:00' },
     { nome: 'Negão', inicio: '18:00', fim: '18:30' },
-    { nome: 'Ferrugem', inicio: '19:00', fim: '19:30' }
+    { nome: 'Ferrugem', inicio: '18:30', fim: '19:00' },
+    { nome: 'Gui', inicio: '11:00', fim: '11:30' },
+    { nome: 'Wesley', inicio: '16:00', fim: '16:30' }
   ],
   6: [ // Sábado
     { nome: 'Dinho', inicio: '09:00', fim: '09:30' },
     { nome: 'Bahia', inicio: '10:00', fim: '10:30' },
     { nome: 'Gabriel', inicio: '11:00', fim: '11:30' },
     { nome: 'Marcelinho', inicio: '12:00', fim: '12:30' },
-    { nome: 'Vando', inicio: '15:00', fim: '15:30' }
+    { nome: 'Tiele', inicio: '15:00', fim: '15:30' },
+    { nome: 'João', inicio: '16:00', fim: '17:00' },
+    { nome: 'Vando', inicio: '17:00', fim: '17:30' }
   ]
 }
 
@@ -138,6 +142,25 @@ export function gerarHorariosDisponiveis(date, duracaoServico) {
   }
 
   return slots
+}
+
+// Verificar se uma data tem horários disponíveis (considerando agendamentos existentes)
+export async function diaTemHorariosDisponiveis(date, duracaoServico, agendamentosOcupados) {
+  const todosHorarios = gerarHorariosDisponiveis(date, duracaoServico)
+  
+  if (todosHorarios.length === 0) {
+    return false
+  }
+
+  // Filtrar horários que não estão ocupados
+  const horariosLivres = todosHorarios.filter(slot => {
+    const isOcupado = agendamentosOcupados.some(ag => {
+      return ag.horario_inicio === slot.inicio
+    })
+    return !isOcupado
+  })
+
+  return horariosLivres.length > 0
 }
 
 // Verificar se a data é no passado

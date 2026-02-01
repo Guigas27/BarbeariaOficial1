@@ -1,9 +1,10 @@
 import { isBarberiaAberta, isDataPassado, formatarDataCurta } from '../utils/helpers.js'
 
 export class Calendar {
-  constructor(container, onDateSelect) {
+  constructor(container, onDateSelect, checkAvailability = null) {
     this.container = container
     this.onDateSelect = onDateSelect
+    this.checkAvailability = checkAvailability
     this.currentDate = new Date()
     this.selectedDate = null
   }
@@ -73,6 +74,15 @@ export class Calendar {
       if (isDataPassado(dateStr) || !isBarberiaAberta(dateStr)) {
         classes.push('disabled')
         disabled = true
+      }
+      
+      // Verificar se o dia tem horários disponíveis (se a função foi fornecida)
+      if (!disabled && this.checkAvailability) {
+        const hasAvailability = this.checkAvailability(dateStr)
+        if (!hasAvailability) {
+          classes.push('disabled')
+          disabled = true
+        }
       }
 
       html += `
