@@ -3,8 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barbearia Presença - Sistema de Agendamento</title>
-  <meta name="description" content="Sistema de agendamento online para Barbearia Presença">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#D4AF37">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BarberPro">
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <!-- SEO -->
+  <title>Barbearia Presença - Agendamento Online</title>
+  <meta name="description" content="Agende seu horário na Barbearia Presença de forma rápida e prática. Sistema de agendamento online profissional.">
+  <meta name="keywords" content="barbearia, agendamento, corte de cabelo, barba, barbeiro">
+  <meta name="author" content="Barbearia Presença">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Barbearia Presença - Agendamento Online">
+  <meta property="og:description" content="Agende seu horário de forma rápida e prática">
+  <meta property="og:image" content="/icon-512.png">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Barbearia Presença">
+  <meta name="twitter:description" content="Agendamento online rápido e fácil">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  
+  <!-- Preconnect to Supabase -->
+  <link rel="preconnect" href="https://supabase.co">
+  <link rel="dns-prefetch" href="https://supabase.co">
+  
+  <!-- Styles -->
   <link rel="stylesheet" href="/src/styles/global.css">
   <link rel="stylesheet" href="/src/styles/mobile.css">
 </head>
@@ -17,5 +54,23 @@
   </div>
   
   <script type="module" src="/src/app.js"></script>
+  
+  <!-- PWA Install Prompt -->
+  <script>
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Mostrar botão de instalação se desejar
+      console.log('PWA instalável!');
+    });
+    
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA instalado com sucesso!');
+      deferredPrompt = null;
+    });
+  </script>
 </body>
 </html>

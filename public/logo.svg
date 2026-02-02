@@ -1,0 +1,25 @@
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tesoura estilizada em dourado -->
+  <g fill="#D4AF37">
+    <!-- Lâmina superior -->
+    <path d="M15,12 L28,20 L15,16 Z"/>
+    <!-- Lâmina inferior -->
+    <path d="M15,28 L28,20 L15,24 Z"/>
+    <!-- Círculo superior (alça) -->
+    <circle cx="13" cy="14" r="4" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+    <!-- Círculo inferior (alça) -->
+    <circle cx="13" cy="26" r="4" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+    <!-- Parafuso central -->
+    <circle cx="28" cy="20" r="2"/>
+  </g>
+  
+  <!-- Texto "BARBEARIA" -->
+  <text x="38" y="18" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#D4AF37" letter-spacing="1">
+    BARBEARIA
+  </text>
+  
+  <!-- Texto "Presença" -->
+  <text x="38" y="30" font-family="Arial, sans-serif" font-size="9" fill="#FFFFFF" letter-spacing="0.5">
+    Presença
+  </text>
+</svg>

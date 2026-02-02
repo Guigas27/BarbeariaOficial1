@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+</head>
+<body>
+    <canvas id="canvas192" width="192" height="192" style="display:none;"></canvas>
+    <canvas id="canvas512" width="512" height="512" style="display:none;"></canvas>
+    <p>Ícones gerados! Clique com botão direito nas imagens abaixo e salve:</p>
+    <div>
+        <h3>Icon 192x192</h3>
+        <img id="img192" />
+        <h3>Icon 512x512</h3>
+        <img id="img512" />
+    </div>
+    
+    <script>
+    function generateIcon(canvas, size) {
+        const ctx = canvas.getContext('2d');
+        const centerX = size / 2;
+        const centerY = size / 2;
+        
+        // Background
+        ctx.fillStyle = '#0A0A0A';
+        ctx.fillRect(0, 0, size, size);
+        
+        // Dourado
+        ctx.fillStyle = '#D4AF37';
+        ctx.strokeStyle = '#D4AF37';
+        
+        // Tesoura simplificada
+        ctx.lineWidth = size * 0.015;
+        
+        // Círculo esquerdo
+        ctx.beginPath();
+        ctx.arc(centerX - size * 0.15, centerY - size * 0.08, size * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Círculo direito
+        ctx.beginPath();
+        ctx.arc(centerX + size * 0.15, centerY - size * 0.08, size * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Linhas das lâminas
+        ctx.beginPath();
+        ctx.moveTo(centerX - size * 0.15, centerY - size * 0.08);
+        ctx.lineTo(centerX - size * 0.03, centerY + size * 0.12);
+        ctx.moveTo(centerX + size * 0.15, centerY - size * 0.08);
+        ctx.lineTo(centerX + size * 0.03, centerY + size * 0.12);
+        ctx.lineWidth = size * 0.02;
+        ctx.stroke();
+        
+        // Ponto central
+        ctx.beginPath();
+        ctx.arc(centerX, centerY + size * 0.12, size * 0.025, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Texto PJ
+        ctx.font = `bold ${size * 0.15}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PJ', centerX, centerY + size * 0.28);
+        
+        // Texto BARBER
+        ctx.font = `bold ${size * 0.07}px Arial`;
+        ctx.fillText('BARBER', centerX, centerY + size * 0.38);
+        
+        return canvas.toDataURL('image/png');
+    }
+    
+    // Gerar ícones
+    const canvas192 = document.getElementById('canvas192');
+    const canvas512 = document.getElementById('canvas512');
+    
+    document.getElementById('img192').src = generateIcon(canvas192, 192);
+    document.getElementById('img512').src = generateIcon(canvas512, 512);
+    </script>
+</body>
+</html>

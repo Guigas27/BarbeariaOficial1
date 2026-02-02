@@ -1,5 +1,5 @@
 import { agendamentoService } from '../services/agendamento.js'
-import { formatarData, formatarValor, formatarDataCurta, getCorStatus, capitalize } from '../utils/helpers.js'
+import { formatarData, formatarValor, formatarDataCurta, getCorStatus, capitalize, getNomeDiaSemana } from '../utils/helpers.js'
 import { Modal } from '../components/Modal.js'
 
 export class AdminPage {
@@ -199,12 +199,19 @@ export class AdminPage {
 
     container.innerHTML = datas.map(data => {
       const agendamentos = porData[data].sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio))
+      const diaSemana = getNomeDiaSemana(data)
+      const total = agendamentos.length
       
       return `
-        <div style="margin-bottom: 32px;">
-          <h3 style="color: var(--primary-gold); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
-            ${capitalize(formatarData(data))}
-          </h3>
+        <div style="margin-bottom: 32px; border-left: 4px solid var(--primary-gold); padding-left: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="font-size: clamp(16px, 4vw, 18px); color: var(--primary-gold); margin: 0;">
+              ${formatarData(data)} - ${capitalize(diaSemana)}
+            </h3>
+            <span style="font-size: 14px; color: var(--text-secondary); background: var(--background-card-hover); padding: 4px 12px; border-radius: 12px;">
+              ${total} agendamento${total !== 1 ? 's' : ''}
+            </span>
+          </div>
           <div class="grid">
             ${agendamentos.map(ag => this.renderAgendamentoCard(ag)).join('')}
           </div>
@@ -212,21 +219,50 @@ export class AdminPage {
       `
     }).join('')
 
-    // Adicionar event listeners
-    datas.forEach(data => {
-      porData[data].forEach(ag => {
-        const editBtn = document.querySelector(`[data-edit-id="${ag.id}"]`)
-        const cancelBtn = document.querySelector(`[data-cancel-id="${ag.id}"]`)
-        const completeBtn = document.querySelector(`[data-complete-id="${ag.id}"]`)
+    this.setupEventListeners()
+  }
 
-        if (editBtn) {
-          editBtn.addEventListener('click', () => this.editarAgendamento(ag))
+  setupEventListeners() {
+    // Botões de editar
+    document.querySelectorAll('[data-edit-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-edit-id'))
+        const agendamento = this.agendamentos.find(ag => ag.id === id)
+        if (agendamento) {
+          this.editarAgendamento(agendamento)
         }
-        if (cancelBtn) {
-          cancelBtn.addEventListener('click', () => this.cancelarAgendamento(ag))
+      })
+    })
+
+    // Botões de cancelar
+    document.querySelectorAll('[data-cancel-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-cancel-id'))
+        const agendamento = this.agendamentos.find(ag => ag.id === id)
+        if (agendamento) {
+          this.cancelarAgendamento(agendamento)
         }
-        if (completeBtn) {
-          completeBtn.addEventListener('click', () => this.concluirAgendamento(ag))
+      })
+    })
+
+    // Botões de concluir
+    document.querySelectorAll('[data-complete-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-complete-id'))
+        const agendamento = this.agendamentos.find(ag => ag.id === id)
+        if (agendamento) {
+          this.concluirAgendamento(agendamento)
+        }
+      })
+    })
+
+    // Botões de ver detalhes
+    document.querySelectorAll('[data-view-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-view-id'))
+        const agendamento = this.agendamentos.find(ag => ag.id === id)
+        if (agendamento) {
+          this.verAgendamento(agendamento)
         }
       })
     })
@@ -474,8 +510,155 @@ export class AdminPage {
     this.render()
   }
 
-  editarAgendamento(ag) {
-    alert('Funcionalidade de edição em desenvolvimento')
+  async editarAgendamento(ag) {
+    const modal = new Modal(
+      'Editar Agendamento',
+      `
+        <form id="editForm" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="input-group">
+            <label>Cliente</label>
+            <input type="text" id="editNomeCliente" value="${ag.nome_cliente}" required>
+          </div>
+
+          <div class="input-group">
+            <label>Data</label>
+            <input type="date" id="editData" value="${ag.data}" required>
+          </div>
+
+          <div class="grid grid-2" style="gap: 16px;">
+            <div class="input-group">
+              <label>Horário Início</label>
+              <input type="time" id="editHorarioInicio" value="${ag.horario_inicio}" required>
+            </div>
+
+            <div class="input-group">
+              <label>Horário Fim</label>
+              <input type="time" id="editHorarioFim" value="${ag.horario_fim}" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Serviço</label>
+            <select id="editServico" required>
+              <option value="Cabelo" ${ag.servico === 'Cabelo' ? 'selected' : ''}>Cabelo - R$ 35,00</option>
+              <option value="Barba" ${ag.servico === 'Barba' ? 'selected' : ''}>Barba - R$ 30,00</option>
+              <option value="Cabelo + Barba" ${ag.servico === 'Cabelo + Barba' ? 'selected' : ''}>Cabelo + Barba - R$ 60,00</option>
+              <option value="Luzes" ${ag.servico === 'Luzes' ? 'selected' : ''}>Luzes - R$ 70,00</option>
+              <option value="Platinado" ${ag.servico === 'Platinado' ? 'selected' : ''}>Platinado - R$ 120,00</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Valor (R$)</label>
+            <input type="number" id="editValor" value="${ag.valor}" step="0.01" required>
+          </div>
+
+          <div class="input-group">
+            <label>Status</label>
+            <select id="editStatus" required>
+              <option value="ativo" ${ag.status === 'ativo' ? 'selected' : ''}>Ativo</option>
+              <option value="concluido" ${ag.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+              <option value="cancelado" ${ag.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Observações</label>
+            <textarea id="editObservacoes" rows="3">${ag.observacoes_cliente || ''}</textarea>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+              Salvar Alterações
+            </button>
+            <button type="button" class="btn btn-secondary" id="editCancelBtn">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      `,
+      null
+    )
+
+    modal.render()
+
+    // Handler do formulário
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+
+      const novosDados = {
+        nome_cliente: document.getElementById('editNomeCliente').value,
+        data: document.getElementById('editData').value,
+        horario_inicio: document.getElementById('editHorarioInicio').value,
+        horario_fim: document.getElementById('editHorarioFim').value,
+        servico: document.getElementById('editServico').value,
+        valor: parseFloat(document.getElementById('editValor').value),
+        status: document.getElementById('editStatus').value,
+        observacoes_cliente: document.getElementById('editObservacoes').value
+      }
+
+      // Verificar se mudou data ou horário
+      const mudouHorario = 
+        ag.data !== novosDados.data ||
+        ag.horario_inicio !== novosDados.horario_inicio ||
+        ag.horario_fim !== novosDados.horario_fim
+
+      if (mudouHorario) {
+        // Verificar conflitos (excluindo o próprio agendamento)
+        const { data: conflitos } = await agendamentoService.getByDate(novosDados.data)
+        
+        const temConflito = conflitos?.some(outro => {
+          if (outro.id === ag.id) return false // Ignora ele mesmo
+          if (outro.status === 'cancelado') return false
+
+          return (
+            (outro.horario_inicio <= novosDados.horario_inicio && outro.horario_fim > novosDados.horario_inicio) ||
+            (outro.horario_inicio < novosDados.horario_fim && outro.horario_fim >= novosDados.horario_fim) ||
+            (outro.horario_inicio >= novosDados.horario_inicio && outro.horario_fim <= novosDados.horario_fim)
+          )
+        })
+
+        if (temConflito) {
+          alert('⚠️ Já existe um agendamento neste horário!')
+          return
+        }
+
+        // TODO: Verificar bloqueios quando implementado
+        // const { bloqueado } = await bloqueioService.isHorarioBloqueado(...)
+      }
+
+      // Atualizar
+      const { error } = await agendamentoService.update(ag.id, novosDados)
+
+      if (error) {
+        alert('❌ Erro ao atualizar agendamento: ' + error.message)
+        return
+      }
+
+      alert('✅ Agendamento atualizado com sucesso!')
+      modal.close()
+      this.render()
+    })
+
+    // Botão cancelar
+    document.getElementById('editCancelBtn').addEventListener('click', () => {
+      modal.close()
+    })
+
+    // Auto-calcular valor ao mudar serviço
+    document.getElementById('editServico').addEventListener('change', (e) => {
+      const precos = {
+        'Cabelo': 35,
+        'Barba': 30,
+        'Cabelo + Barba': 60,
+        'Luzes': 70,
+        'Platinado': 120
+      }
+      const servico = e.target.value
+      if (precos[servico]) {
+        document.getElementById('editValor').value = precos[servico]
+      }
+    })
   }
 
   getMonthName(month) {

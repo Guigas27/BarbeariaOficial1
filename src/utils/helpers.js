@@ -21,8 +21,7 @@ export const HORARIOS_FIXOS = {
     { nome: 'Jo', inicio: '17:00', fim: '18:00' },
     { nome: 'Negão', inicio: '18:00', fim: '18:30' },
     { nome: 'Ferrugem', inicio: '18:30', fim: '19:00' },
-    { nome: 'Gui', inicio: '11:00', fim: '11:30' },
-    { nome: 'Wesley', inicio: '16:00', fim: '16:30' }
+    { nome: 'Gui', inicio: '11:00', fim: '11:30' }
   ],
   6: [ // Sábado
     { nome: 'Dinho', inicio: '09:00', fim: '09:30' },

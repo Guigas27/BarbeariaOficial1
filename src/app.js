@@ -37,8 +37,18 @@ class App {
   }
 
   async checkAuth() {
-    const { data: user } = await authService.getCurrentUser()
-    this.user = user
+    try {
+      const { data: user, error } = await authService.getCurrentUser()
+      if (error) {
+        console.error('Erro ao verificar autenticação:', error)
+        this.user = null
+        return
+      }
+      this.user = user
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error)
+      this.user = null
+    }
   }
 
   async handleRoute() {
@@ -117,4 +127,15 @@ class App {
 // Inicializar app
 document.addEventListener('DOMContentLoaded', () => {
   new App()
+  
+  // Registrar Service Worker para PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('✅ Service Worker registrado:', registration.scope)
+      })
+      .catch(error => {
+        console.log('❌ Erro ao registrar Service Worker:', error)
+      })
+  }
 })
