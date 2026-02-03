@@ -1,5 +1,6 @@
 import { Calendar } from '../components/Calendar.js'
 import { agendamentoService } from '../services/agendamento.js'
+import { bloqueioService } from '../services/bloqueio.js'
 import { SERVICOS, gerarHorariosDisponiveis, formatarData, formatarValor } from '../utils/helpers.js'
 
 export class AgendarPage {
@@ -15,6 +16,7 @@ export class AgendarPage {
     }
     this.horariosOcupados = []
     this.todosAgendamentos = [] // Armazena todos os agendamentos do mês
+    this.bloqueios = [] // Armazena bloqueios
   }
 
   async render() {
@@ -118,18 +120,22 @@ export class AgendarPage {
     const month2 = hoje.getMonth() + 2
     
     try {
-      const [result1, result2] = await Promise.all([
+      const [result1, result2, bloqueiosResult] = await Promise.all([
         agendamentoService.getByMonth(year, month1),
-        agendamentoService.getByMonth(month2 > 12 ? year + 1 : year, month2 > 12 ? month2 - 12 : month2)
+        agendamentoService.getByMonth(month2 > 12 ? year + 1 : year, month2 > 12 ? month2 - 12 : month2),
+        bloqueioService.getAll() // Carregar todos os bloqueios
       ])
       
       this.todosAgendamentos = [
         ...(result1.data || []),
         ...(result2.data || [])
       ]
+
+      this.bloqueios = bloqueiosResult.data || []
     } catch (error) {
-      console.error('Erro ao carregar agendamentos:', error)
+      console.error('Erro ao carregar agendamentos e bloqueios:', error)
       this.todosAgendamentos = []
+      this.bloqueios = []
     }
   }
 
@@ -150,26 +156,23 @@ export class AgendarPage {
     
     // Função para verificar se um dia tem horários disponíveis
     const checkAvailability = (dateStr) => {
-      const todosHorarios = gerarHorariosDisponiveis(dateStr, this.agendamento.servico.duracao)
+      // Filtrar bloqueios desta data
+      const bloqueiosDoDia = this.bloqueios.filter(b => b.data === dateStr)
       
-      if (todosHorarios.length === 0) {
-        return false
-      }
-
       // Filtrar agendamentos desta data específica
       const agendamentosDoDia = this.todosAgendamentos.filter(ag => {
         return ag.data === dateStr && ag.status === 'ativo'
       })
 
-      // Verificar se há pelo menos um horário livre
-      const horariosLivres = todosHorarios.filter(slot => {
-        const isOcupado = agendamentosDoDia.some(ag => {
-          return ag.horario_inicio === slot.inicio
-        })
-        return !isOcupado
-      })
-
-      return horariosLivres.length > 0
+      // Gerar horários considerando bloqueios e agendamentos
+      const todosHorarios = gerarHorariosDisponiveis(
+        dateStr, 
+        this.agendamento.servico.duracao,
+        bloqueiosDoDia,
+        agendamentosDoDia
+      )
+      
+      return todosHorarios.length > 0
     }
     
     const calendar = new Calendar(calendarContainer, async (date) => {
@@ -200,19 +203,16 @@ export class AgendarPage {
   }
 
   renderStepHorario(container) {
-    const horariosDisponiveis = gerarHorariosDisponiveis(
+    // Filtrar bloqueios desta data
+    const bloqueiosDoDia = this.bloqueios.filter(b => b.data === this.agendamento.data)
+    
+    // Gerar horários já considerando bloqueios e agendamentos
+    const horariosLivres = gerarHorariosDisponiveis(
       this.agendamento.data, 
-      this.agendamento.servico.duracao
+      this.agendamento.servico.duracao,
+      bloqueiosDoDia,
+      this.horariosOcupados
     )
-
-    // Filtrar horários que já estão ocupados
-    const horariosLivres = horariosDisponiveis.filter(slot => {
-      // Verificar se este horário está ocupado
-      const isOcupado = this.horariosOcupados.some(ag => {
-        return ag.horario_inicio === slot.inicio
-      })
-      return !isOcupado
-    })
 
     container.innerHTML = `
       <div>
@@ -236,7 +236,7 @@ export class AgendarPage {
         <div class="empty-state">
           <div class="empty-state-icon">📅</div>
           <div class="empty-state-title">Sem horários disponíveis</div>
-          <div class="empty-state-text">Todos os horários deste dia já foram preenchidos. Escolha outra data.</div>
+          <div class="empty-state-text">Todos os horários deste dia já foram preenchidos ou estão bloqueados. Escolha outra data.</div>
         </div>
       `
     } else {
@@ -345,7 +345,57 @@ export class AgendarPage {
     confirmarBtn.disabled = true
     confirmarBtn.textContent = 'Confirmando...'
 
-    // Verificar disponibilidade novamente
+    // VALIDAÇÃO RIGOROSA: Verificar CADA intervalo de 30min do serviço
+    const [hInicio, mInicio] = this.agendamento.horario.inicio.split(':').map(Number)
+    const [hFim, mFim] = this.agendamento.horario.fim.split(':').map(Number)
+    const inicioMinutos = hInicio * 60 + mInicio
+    const fimMinutos = hFim * 60 + mFim
+    
+    // Buscar bloqueios da data
+    const { data: bloqueios } = await bloqueioService.getByDate(this.agendamento.data)
+    
+    // Verificar cada ponto de 30 em 30 minutos
+    for (let min = inicioMinutos; min < fimMinutos; min += 30) {
+      const h = Math.floor(min / 60)
+      const m = min % 60
+      const horarioAtual = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+      
+      const proxMin = min + 30
+      const proxH = Math.floor(proxMin / 60)
+      const proxM = proxMin % 60
+      const horarioProx = `${String(proxH).padStart(2, '0')}:${String(proxM).padStart(2, '0')}`
+      
+      // Verificar bloqueios neste intervalo
+      if (bloqueios && bloqueios.length > 0) {
+        for (const bloq of bloqueios) {
+          if (bloq.tipo === 'dia_inteiro') {
+            errorMessage.textContent = 'Este dia está bloqueado e não aceita agendamentos.'
+            errorMessage.classList.remove('hidden')
+            confirmarBtn.disabled = false
+            confirmarBtn.textContent = 'Confirmar Agendamento'
+            return
+          }
+          
+          if (bloq.tipo === 'horario_especifico') {
+            const conflitoIntervalo = (
+              (horarioAtual >= bloq.horario_inicio && horarioAtual < bloq.horario_fim) ||
+              (horarioProx > bloq.horario_inicio && horarioProx <= bloq.horario_fim) ||
+              (horarioAtual <= bloq.horario_inicio && horarioProx >= bloq.horario_fim)
+            )
+            
+            if (conflitoIntervalo) {
+              errorMessage.textContent = 'Este horário passa por um período bloqueado. Escolha outro horário.'
+              errorMessage.classList.remove('hidden')
+              confirmarBtn.disabled = false
+              confirmarBtn.textContent = 'Confirmar Agendamento'
+              return
+            }
+          }
+        }
+      }
+    }
+
+    // Verificar disponibilidade (agendamentos)
     const { available } = await agendamentoService.isTimeSlotAvailable(
       this.agendamento.data,
       this.agendamento.horario.inicio,

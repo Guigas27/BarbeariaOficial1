@@ -104,7 +104,7 @@ export function isHorarioFixo(date, horarioInicio) {
 }
 
 // Gerar slots de horário disponíveis para um dia
-export function gerarHorariosDisponiveis(date, duracaoServico) {
+export function gerarHorariosDisponiveis(date, duracaoServico, bloqueios = [], agendamentos = []) {
   const funcionamento = getHorarioFuncionamento(date)
   if (!funcionamento) return []
 
@@ -120,27 +120,160 @@ export function gerarHorariosDisponiveis(date, duracaoServico) {
     const minuto = currentMinutos % 60
     const horarioStr = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`
 
-    // Verificar se está dentro do horário de funcionamento (não no intervalo)
-    if (isDentroHorarioFuncionamento(date, horarioStr)) {
-      // Calcular horário de fim
-      const fimMinutos = currentMinutos + duracaoServico
-      const horaFim = Math.floor(fimMinutos / 60)
-      const minutoFim = fimMinutos % 60
-      const horarioFimStr = `${String(horaFim).padStart(2, '0')}:${String(minutoFim).padStart(2, '0')}`
+    // Calcular horário de fim do slot
+    const fimSlotMinutos = currentMinutos + duracaoServico
+    const horaFimSlot = Math.floor(fimSlotMinutos / 60)
+    const minutoFimSlot = fimSlotMinutos % 60
+    const horarioFimStr = `${String(horaFimSlot).padStart(2, '0')}:${String(minutoFimSlot).padStart(2, '0')}`
 
-      // Verificar se não é horário fixo
-      if (!isHorarioFixo(date, horarioStr)) {
-        slots.push({
-          inicio: horarioStr,
-          fim: horarioFimStr
-        })
+    // Verificar se TODO o período está dentro do horário de funcionamento
+    let dentroHorario = true
+    let minutosTeste = currentMinutos
+
+    while (minutosTeste < currentMinutos + duracaoServico) {
+      const horaTeste = Math.floor(minutosTeste / 60)
+      const minTeste = minutosTeste % 60
+      const horarioTeste = `${String(horaTeste).padStart(2, '0')}:${String(minTeste).padStart(2, '0')}`
+      
+      if (!isDentroHorarioFuncionamento(date, horarioTeste)) {
+        dentroHorario = false
+        break
       }
+      
+      minutosTeste += 30 // Verifica a cada 30min
     }
+
+    if (!dentroHorario) {
+      currentMinutos += 30
+      continue
+    }
+
+    // Verificar se TODO o período passa por horário fixo (não só o início)
+    let periodoTemHorarioFixo = false
+    let minutosTesteFixo = currentMinutos
+    
+    while (minutosTesteFixo < currentMinutos + duracaoServico) {
+      const horaTeste = Math.floor(minutosTesteFixo / 60)
+      const minTeste = minutosTesteFixo % 60
+      const horarioTeste = `${String(horaTeste).padStart(2, '0')}:${String(minTeste).padStart(2, '0')}`
+      
+      if (isHorarioFixo(date, horarioTeste)) {
+        periodoTemHorarioFixo = true
+        break
+      }
+      
+      minutosTesteFixo += 30 // Verifica a cada 30min
+    }
+
+    if (periodoTemHorarioFixo) {
+      currentMinutos += 30
+      continue
+    }
+
+    // Verificar se TODO o período do serviço está livre de bloqueios
+    const periodoTemBloqueio = verificarPeriodoBloqueado(
+      date, 
+      horarioStr, 
+      horarioFimStr, 
+      bloqueios
+    )
+
+    if (periodoTemBloqueio) {
+      currentMinutos += 30
+      continue
+    }
+
+    // Verificar se TODO o período está livre de agendamentos
+    const periodoTemAgendamento = verificarPeriodoAgendado(
+      date,
+      horarioStr,
+      horarioFimStr,
+      agendamentos
+    )
+
+    if (periodoTemAgendamento) {
+      currentMinutos += 30
+      continue
+    }
+
+    // Se passou por todas as verificações, adiciona o slot
+    slots.push({
+      inicio: horarioStr,
+      fim: horarioFimStr
+    })
 
     currentMinutos += 30 // Incremento de 30 minutos
   }
 
   return slots
+}
+
+// Verificar se um período tem bloqueio (parcial ou total)
+function verificarPeriodoBloqueado(data, horarioInicio, horarioFim, bloqueios) {
+  if (!bloqueios || bloqueios.length === 0) return false
+
+  // Converter horários para minutos
+  const [inicioHora, inicioMin] = horarioInicio.split(':').map(Number)
+  const [fimHora, fimMin] = horarioFim.split(':').map(Number)
+  const inicioMinutos = inicioHora * 60 + inicioMin
+  const fimMinutos = fimHora * 60 + fimMin
+
+  return bloqueios.some(bloq => {
+    // Se dia inteiro está bloqueado
+    if (bloq.tipo === 'dia_inteiro' && bloq.data === data) {
+      return true
+    }
+
+    // Se é bloqueio de horário específico
+    if (bloq.tipo === 'horario_especifico' && bloq.data === data) {
+      const [bloqInicioHora, bloqInicioMin] = bloq.horario_inicio.split(':').map(Number)
+      const [bloqFimHora, bloqFimMin] = bloq.horario_fim.split(':').map(Number)
+      const bloqInicioMinutos = bloqInicioHora * 60 + bloqInicioMin
+      const bloqFimMinutos = bloqFimHora * 60 + bloqFimMin
+
+      // Verifica se há QUALQUER sobreposição
+      // O bloqueio sobrepõe se:
+      // 1. Começa durante o serviço: bloqInicio >= inicio && bloqInicio < fim
+      // 2. Termina durante o serviço: bloqFim > inicio && bloqFim <= fim
+      // 3. Engloba todo o serviço: bloqInicio <= inicio && bloqFim >= fim
+      // 4. Está contido no serviço: bloqInicio >= inicio && bloqFim <= fim
+      
+      return (
+        (bloqInicioMinutos < fimMinutos && bloqFimMinutos > inicioMinutos)
+      )
+    }
+
+    return false
+  })
+}
+
+// Verificar se um período tem agendamento (parcial ou total)
+function verificarPeriodoAgendado(data, horarioInicio, horarioFim, agendamentos) {
+  if (!agendamentos || agendamentos.length === 0) return false
+
+  // Converter horários para minutos
+  const [inicioHora, inicioMin] = horarioInicio.split(':').map(Number)
+  const [fimHora, fimMin] = horarioFim.split(':').map(Number)
+  const inicioMinutos = inicioHora * 60 + inicioMin
+  const fimMinutos = fimHora * 60 + fimMin
+
+  return agendamentos.some(ag => {
+    // Ignora agendamentos cancelados
+    if (ag.status === 'cancelado') return false
+    
+    // Verifica se é da mesma data
+    if (ag.data !== data) return false
+
+    const [agInicioHora, agInicioMin] = ag.horario_inicio.split(':').map(Number)
+    const [agFimHora, agFimMin] = ag.horario_fim.split(':').map(Number)
+    const agInicioMinutos = agInicioHora * 60 + agInicioMin
+    const agFimMinutos = agFimHora * 60 + agFimMin
+
+    // Verifica se há QUALQUER sobreposição
+    return (
+      (agInicioMinutos < fimMinutos && agFimMinutos > inicioMinutos)
+    )
+  })
 }
 
 // Verificar se uma data tem horários disponíveis (considerando agendamentos existentes)

@@ -32,6 +32,14 @@ export class Header {
               <span>📊</span>
               <span>Área do Barbeiro</span>
             </a>
+            <a href="#/agendar-admin" class="nav-item" data-page="agendar-admin">
+              <span>➕</span>
+              <span>Agendar (Admin)</span>
+            </a>
+            <a href="#/bloqueios" class="nav-item" data-page="bloqueios">
+              <span>🚫</span>
+              <span>Bloqueios</span>
+            </a>
           ` : ''}
           <a href="#/agendar" class="nav-item" data-page="agendar">
             <span>📅</span>

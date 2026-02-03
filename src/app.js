@@ -107,6 +107,24 @@ class App {
       }
       this.currentPage = new AdminPage(contentContainer, this.user)
       await this.currentPage.render()
+    }
+    else if (hash === '#/bloqueios') {
+      if (this.user.role !== 'admin') {
+        window.location.hash = '#/agendar'
+        return
+      }
+      const { BloqueiosPage } = await import('./pages/BloqueiosPage.js')
+      this.currentPage = new BloqueiosPage(contentContainer, this.user)
+      await this.currentPage.render()
+    }
+    else if (hash === '#/agendar-admin') {
+      if (this.user.role !== 'admin') {
+        window.location.hash = '#/agendar'
+        return
+      }
+      const { AgendarAdminPage } = await import('./pages/AgendarAdminPage.js')
+      this.currentPage = new AgendarAdminPage(contentContainer, this.user)
+      await this.currentPage.render()
     } 
     else {
       // Rota padrão para usuários autenticados
