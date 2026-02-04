@@ -15,12 +15,12 @@ export class AgendarAdminPage {
 
   async render() {
     this.container.innerHTML = `
-      <div style="padding: 40px 20px 40px 300px; width: 100%;">
-        <div style="max-width: 1400px; margin: 0 auto;">
-          <h1 style="font-size: 28px; margin-bottom: 32px; display: block; width: 100%;">Agendar (Admin)</h1>
+      <div class="main-content">
+        <div class="container" style="padding-top: 40px; padding-bottom: 40px;">
+          <h1 style="font-size: clamp(24px, 5vw, 32px); margin-bottom: 32px; color: var(--primary-gold);">Agendar (Admin)</h1>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
-            <div class="card" style="height: fit-content;">
+          <div class="grid grid-2" style="gap: 24px; align-items: start;">
+            <div class="card">
               <h2 style="margin-bottom: 24px; font-size: 20px;">Escolha o Dia</h2>
               <div id="calendar"></div>
             </div>
@@ -29,23 +29,12 @@ export class AgendarAdminPage {
               <div class="empty-state">
                 <div class="empty-state-icon">📅</div>
                 <div class="empty-state-title">Selecione um dia</div>
-                <div class="empty-state-text">Clique em uma data no calendário para ver os horários</div>
+                <div class="empty-state-text">Clique em uma data no calendário</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <style>
-        @media (max-width: 1024px) {
-          [style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
-          [style*="padding-left: 300px"] {
-            padding-left: 20px !important;
-          }
-        }
-      </style>
     `
 
     this.renderCalendar()
@@ -95,32 +84,27 @@ export class AgendarAdminPage {
 
     container.innerHTML = `
       <div>
-        <h2 style="margin-bottom: 8px;">${formatarData(this.dataSelecionada)}</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 24px;">${diaSemana}</p>
+        <h2 style="margin-bottom: 8px; font-size: 20px;">${formatarData(this.dataSelecionada)}</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px;">${diaSemana}</p>
 
         ${agendamentosAtivos.length > 0 ? `
           <div style="margin-bottom: 24px;">
             <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--primary-gold);">
               📋 Agendamentos (${agendamentosAtivos.length})
             </h3>
-            <div style="display: grid; gap: 8px;">
+            <div style="display: grid; gap: 12px;">
               ${agendamentosAtivos.map(ag => this.renderAgendamentoItem(ag)).join('')}
             </div>
           </div>
         ` : `
-          <div style="padding: 16px; background: var(--background-dark); border-radius: 8px; margin-bottom: 24px; text-align: center; color: var(--text-secondary);">
+          <div style="padding: 16px; background: var(--background-dark); border-radius: 8px; margin-bottom: 24px; text-align: center; color: var(--text-secondary); font-size: 14px;">
             Nenhum agendamento neste dia
           </div>
         `}
 
-        <div>
-          <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--success);">
-            ✅ Horários Disponíveis
-          </h3>
-          <button class="btn btn-primary" id="btnNovoAgendamento" style="width: 100%;">
-            ➕ Novo Agendamento
-          </button>
-        </div>
+        <button class="btn btn-primary" id="btnNovoAgendamento" style="width: 100%;">
+          ➕ Novo Agendamento
+        </button>
       </div>
     `
 
@@ -131,23 +115,34 @@ export class AgendarAdminPage {
 
   renderAgendamentoItem(ag) {
     return `
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--background-card); border-radius: 6px; border-left: 3px solid var(--primary-gold);">
-        <div style="flex: 1;">
-          <div style="font-weight: 600; margin-bottom: 4px;">
-            ${ag.horario_inicio} - ${ag.horario_fim}
+      <div style="padding: 12px; background: var(--background-card); border-radius: 8px; border-left: 3px solid var(--primary-gold);">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">
+              ${ag.horario_inicio} - ${ag.horario_fim}
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary);">
+              ${ag.users?.nome || ag.nome_cliente}
+            </div>
           </div>
-          <div style="font-size: 14px; color: var(--text-secondary);">
-            ${ag.users?.nome || ag.nome_cliente} · ${ag.servico}
+          <div style="text-align: right;">
+            <div style="font-weight: 600; color: var(--primary-gold); font-size: 15px;">
+              ${formatarValor(ag.valor)}
+            </div>
+            <div style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: ${ag.status === 'ativo' ? 'var(--success)' : 'var(--text-secondary)'}20; color: ${ag.status === 'ativo' ? 'var(--success)' : 'var(--text-secondary)'}; margin-top: 4px;">
+              ${ag.status}
+            </div>
           </div>
         </div>
-        <div style="text-align: right;">
-          <div style="font-weight: 600; color: var(--primary-gold);">
-            ${formatarValor(ag.valor)}
-          </div>
-          <div style="font-size: 12px; padding: 2px 8px; border-radius: 4px; background: ${ag.status === 'ativo' ? 'var(--success)' : 'var(--text-secondary)'}20; color: ${ag.status === 'ativo' ? 'var(--success)' : 'var(--text-secondary)'};">
-            ${ag.status}
-          </div>
+        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">
+          ${ag.servico}
         </div>
+        ${ag.observacoes_cliente ? `
+          <div style="margin-top: 8px; padding: 8px; background: var(--background-dark); border-radius: 6px; font-size: 13px; color: var(--text-secondary);">
+            <span style="font-weight: 600; color: var(--text-primary);">💬 Observações:</span><br>
+            ${ag.observacoes_cliente}
+          </div>
+        ` : ''}
       </div>
     `
   }
@@ -187,11 +182,11 @@ export class AgendarAdminPage {
           </div>
 
           <div style="display: flex; gap: 12px; margin-top: 16px;">
-            <button type="submit" class="btn btn-primary" style="flex: 1;">
-              ✅ Confirmar Agendamento
-            </button>
             <button type="button" class="btn btn-secondary" id="cancelarBtn">
               Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+              ✅ Confirmar
             </button>
           </div>
         </form>
@@ -235,7 +230,7 @@ export class AgendarAdminPage {
     )
 
     if (horariosLivres.length === 0) {
-      horarioSelect.innerHTML = '<option value="">Sem horários disponíveis neste dia</option>'
+      horarioSelect.innerHTML = '<option value="">Sem horários disponíveis</option>'
       horarioSelect.disabled = true
       return
     }
@@ -264,58 +259,6 @@ export class AgendarAdminPage {
     }
 
     const [horarioInicio, horarioFim] = horarioSelect.split('|')
-
-    // Validação rigorosa
-    const [hInicio, mInicio] = horarioInicio.split(':').map(Number)
-    const [hFim, mFim] = horarioFim.split(':').map(Number)
-    const inicioMinutos = hInicio * 60 + mInicio
-    const fimMinutos = hFim * 60 + mFim
-    
-    for (let min = inicioMinutos; min < fimMinutos; min += 30) {
-      const h = Math.floor(min / 60)
-      const m = min % 60
-      const horarioAtual = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-      
-      const proxMin = min + 30
-      const proxH = Math.floor(proxMin / 60)
-      const proxM = proxMin % 60
-      const horarioProx = `${String(proxH).padStart(2, '0')}:${String(proxM).padStart(2, '0')}`
-      
-      for (const bloq of this.bloqueiosDoDia) {
-        if (bloq.tipo === 'dia_inteiro') {
-          alert('⚠️ Este dia está completamente bloqueado!')
-          return
-        }
-        
-        if (bloq.tipo === 'horario_especifico') {
-          const conflitoIntervalo = (
-            (horarioAtual >= bloq.horario_inicio && horarioAtual < bloq.horario_fim) ||
-            (horarioProx > bloq.horario_inicio && horarioProx <= bloq.horario_fim) ||
-            (horarioAtual <= bloq.horario_inicio && horarioProx >= bloq.horario_fim)
-          )
-          
-          if (conflitoIntervalo) {
-            alert(`⚠️ HORÁRIO BLOQUEADO!\n\nO serviço passa por um horário bloqueado:\n• Bloqueio: ${bloq.horario_inicio} - ${bloq.horario_fim}\n• Motivo: ${bloq.motivo || 'Bloqueio administrativo'}\n\nEscolha outro horário.`)
-            return
-          }
-        }
-      }
-      
-      for (const ag of this.agendamentosDoDia) {
-        if (ag.status === 'cancelado') continue
-        
-        const conflitoIntervalo = (
-          (horarioAtual >= ag.horario_inicio && horarioAtual < ag.horario_fim) ||
-          (horarioProx > ag.horario_inicio && horarioProx <= ag.horario_fim) ||
-          (horarioAtual <= ag.horario_inicio && horarioProx >= ag.horario_fim)
-        )
-        
-        if (conflitoIntervalo) {
-          alert(`⚠️ HORÁRIO OCUPADO!\n\nO serviço conflita com outro agendamento:\n• Cliente: ${ag.users?.nome || ag.nome_cliente}\n• Horário: ${ag.horario_inicio} - ${ag.horario_fim}\n• Serviço: ${ag.servico}\n\nEscolha outro horário.`)
-          return
-        }
-      }
-    }
 
     const agendamento = {
       user_id: this.user.id,

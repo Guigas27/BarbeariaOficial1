@@ -11,17 +11,18 @@ export class BloqueiosPage {
 
   async render() {
     this.container.innerHTML = `
-      <div style="padding: 40px 20px 40px 300px; width: 100%;">
-        <div style="max-width: 1200px; margin: 0 auto;">
-          <h1 style="font-size: 28px; margin: 0 0 32px 0; color: var(--text-primary); display: block; width: 100%;">Gerenciar Bloqueios</h1>
-          
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 32px; gap: 12px; flex-wrap: wrap;">
-            <button class="btn btn-primary" id="btnBloquearDia" style="white-space: nowrap;">
-              🚫 Bloquear Dia Inteiro
-            </button>
-            <button class="btn btn-secondary" id="btnBloquearHorario" style="white-space: nowrap;">
-              ⏰ Bloquear Horário
-            </button>
+      <div class="main-content">
+        <div class="container" style="padding-top: 40px; padding-bottom: 40px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+            <h1 style="font-size: clamp(24px, 5vw, 32px); margin: 0; color: var(--primary-gold);">Gerenciar Bloqueios</h1>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <button class="btn btn-primary" id="btnBloquearDia" style="white-space: nowrap;">
+                🚫 Bloquear Dia Inteiro
+              </button>
+              <button class="btn btn-secondary" id="btnBloquearHorario" style="white-space: nowrap;">
+                ⏰ Bloquear Horário
+              </button>
+            </div>
           </div>
 
           <div class="card">
@@ -36,33 +37,42 @@ export class BloqueiosPage {
     this.setupEventListeners()
   }
 
+  setupEventListeners() {
+    document.getElementById('btnBloquearDia')?.addEventListener('click', () => {
+      this.mostrarModalBloquearDia()
+    })
+
+    document.getElementById('btnBloquearHorario')?.addEventListener('click', () => {
+      this.mostrarModalBloquearHorario()
+    })
+  }
+
   async carregarBloqueios() {
+    const container = document.getElementById('bloqueiosList')
+    
     const { data, error } = await bloqueioService.getAll()
 
     if (error) {
-      console.error('Erro ao carregar bloqueios:', error)
-      document.getElementById('bloqueiosList').innerHTML = `
+      container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">❌</div>
-          <div class="empty-state-title">Erro ao carregar bloqueios</div>
+          <div class="empty-state-icon">⚠️</div>
+          <div class="empty-state-title">Erro ao carregar</div>
         </div>
       `
       return
     }
 
     this.bloqueios = data || []
-    this.renderBloqueios()
+    this.renderBloqueios(container)
   }
 
-  renderBloqueios() {
-    const container = document.getElementById('bloqueiosList')
-
+  renderBloqueios(container) {
     if (this.bloqueios.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">📅</div>
           <div class="empty-state-title">Nenhum bloqueio ativo</div>
-          <div class="empty-state-text">Crie bloqueios para impedir agendamentos em dias ou horários específicos</div>
+          <div class="empty-state-text">Crie bloqueios para impedir agendamentos</div>
         </div>
       `
       return
@@ -84,92 +94,92 @@ export class BloqueiosPage {
       const diaSemana = getNomeDiaSemana(data)
 
       return `
-        <div style="margin-bottom: 24px; border-left: 4px solid var(--error); padding-left: 20px;">
+        <div style="margin-bottom: 24px; border-left: 4px solid var(--error); padding-left: 16px;">
           <h3 style="font-size: 16px; color: var(--error); margin-bottom: 12px;">
             ${formatarData(data)} - ${diaSemana}
           </h3>
-          <div style="display: grid; gap: 12px;">
+          <div style="display: grid; gap: 8px;">
             ${bloqueiosDoDia.map(bloq => this.renderBloqueioCard(bloq)).join('')}
           </div>
         </div>
       `
     }).join('')
 
-    // Event listeners para botões de remover
-    document.querySelectorAll('[data-remove-bloqueio]').forEach(btn => {
+    // Adicionar event listeners para botões remover
+    container.querySelectorAll('[data-remover-bloqueio]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const id = parseInt(btn.getAttribute('data-remove-bloqueio'))
-        await this.removerBloqueio(id)
+        const bloqueioId = parseInt(btn.dataset.removerBloqueio)
+        await this.removerBloqueio(bloqueioId)
       })
     })
   }
 
   renderBloqueioCard(bloq) {
-    const isDiaInteiro = bloq.tipo === 'dia_inteiro'
-
     return `
-      <div class="card" style="padding: 16px; background: var(--background-card-hover);">
-        <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px;">
-          <div style="flex: 1;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-              <span style="font-size: 20px;">${isDiaInteiro ? '🚫' : '⏰'}</span>
-              <strong style="color: var(--error);">
-                ${isDiaInteiro ? 'Dia Inteiro Bloqueado' : `${bloq.horario_inicio} - ${bloq.horario_fim}`}
-              </strong>
-            </div>
-            ${bloq.motivo ? `
-              <div style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">
-                💬 ${bloq.motivo}
-              </div>
-            ` : ''}
-            <div style="color: var(--text-secondary); font-size: 12px; margin-top: 8px;">
-              Criado em ${new Date(bloq.created_at).toLocaleString('pt-BR')}
-            </div>
+      <div style="padding: 12px; background: var(--background-card); border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span>${bloq.tipo === 'dia_inteiro' ? '🚫' : '⏰'}</span>
+            <span style="font-weight: 600; font-size: 14px;">
+              ${bloq.tipo === 'dia_inteiro' ? 'Dia Inteiro' : `${bloq.horario_inicio} - ${bloq.horario_fim}`}
+            </span>
           </div>
-          <button 
-            class="btn btn-danger" 
-            data-remove-bloqueio="${bloq.id}"
-            style="padding: 8px 16px; font-size: 13px;">
-            🗑️ Remover
-          </button>
+          ${bloq.motivo ? `
+            <div style="font-size: 13px; color: var(--text-secondary); margin-left: 28px;">
+              ${bloq.motivo}
+            </div>
+          ` : ''}
         </div>
+        <button 
+          class="btn btn-danger" 
+          style="padding: 8px 16px; font-size: 13px;"
+          data-remover-bloqueio="${bloq.id}"
+        >
+          Remover
+        </button>
       </div>
     `
   }
 
-  setupEventListeners() {
-    // Botão bloquear dia inteiro
-    document.getElementById('btnBloquearDia')?.addEventListener('click', () => {
-      this.mostrarModalBloquearDia()
-    })
+  async removerBloqueio(bloqueioId) {
+    if (!confirm('Tem certeza que deseja remover este bloqueio?')) {
+      return
+    }
 
-    // Botão bloquear horário
-    document.getElementById('btnBloquearHorario')?.addEventListener('click', () => {
-      this.mostrarModalBloquearHorario()
-    })
+    const { error } = await bloqueioService.remove(bloqueioId)
+
+    if (error) {
+      alert('❌ Erro ao remover bloqueio')
+      return
+    }
+
+    alert('✅ Bloqueio removido!')
+    this.render()
   }
 
   mostrarModalBloquearDia() {
+    const hoje = new Date().toISOString().split('T')[0]
+    
     const modal = new Modal(
       'Bloquear Dia Inteiro',
       `
         <form id="formBloquearDia" style="display: flex; flex-direction: column; gap: 16px;">
           <div class="input-group">
             <label>Data</label>
-            <input type="date" id="bloqDiaData" required min="${new Date().toISOString().split('T')[0]}">
+            <input type="date" id="dataDia" min="${hoje}" required>
           </div>
 
           <div class="input-group">
             <label>Motivo (opcional)</label>
-            <input type="text" id="bloqDiaMotivo" placeholder="Ex: Feriado, Folga, Evento...">
+            <input type="text" id="motivoDia" placeholder="Ex: Feriado, Folga">
           </div>
 
           <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button type="button" class="btn btn-secondary" id="cancelarBtn">
+              Cancelar
+            </button>
             <button type="submit" class="btn btn-primary" style="flex: 1;">
               🚫 Bloquear Dia
-            </button>
-            <button type="button" class="btn btn-secondary" id="bloqDiaCancelar">
-              Cancelar
             </button>
           </div>
         </form>
@@ -179,62 +189,70 @@ export class BloqueiosPage {
 
     modal.render()
 
+    document.getElementById('cancelarBtn').addEventListener('click', () => {
+      modal.close()
+    })
+
     document.getElementById('formBloquearDia').addEventListener('submit', async (e) => {
       e.preventDefault()
       
-      const data = document.getElementById('bloqDiaData').value
-      const motivo = document.getElementById('bloqDiaMotivo').value
+      const data = document.getElementById('dataDia').value
+      const motivo = document.getElementById('motivoDia').value
+      const submitBtn = e.target.querySelector('button[type="submit"]')
+      
+      submitBtn.disabled = true
+      submitBtn.textContent = 'Bloqueando...'
 
-      const { error } = await bloqueioService.bloquearDiaInteiro(data, motivo, this.user.id)
+      const { error } = await bloqueioService.bloquearDiaInteiro(data, motivo || null)
 
       if (error) {
-        alert('❌ Erro ao bloquear dia: ' + error.message)
+        alert('❌ Erro ao bloquear dia')
+        submitBtn.disabled = false
+        submitBtn.textContent = '🚫 Bloquear Dia'
         return
       }
 
       alert('✅ Dia bloqueado com sucesso!')
       modal.close()
-      await this.carregarBloqueios()
-    })
-
-    document.getElementById('bloqDiaCancelar').addEventListener('click', () => {
-      modal.close()
+      this.render()
     })
   }
 
   mostrarModalBloquearHorario() {
+    const hoje = new Date().toISOString().split('T')[0]
+    
     const modal = new Modal(
-      'Bloquear Horário Específico',
+      'Bloquear Horário',
       `
         <form id="formBloquearHorario" style="display: flex; flex-direction: column; gap: 16px;">
           <div class="input-group">
             <label>Data</label>
-            <input type="date" id="bloqHorData" required min="${new Date().toISOString().split('T')[0]}">
+            <input type="date" id="dataHorario" min="${hoje}" required>
           </div>
 
-          <div class="grid grid-2" style="gap: 16px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="input-group">
-              <label>Horário Início</label>
-              <input type="time" id="bloqHorInicio" required>
+              <label>Início</label>
+              <input type="time" id="horarioInicio" required>
             </div>
 
             <div class="input-group">
-              <label>Horário Fim</label>
-              <input type="time" id="bloqHorFim" required>
+              <label>Fim</label>
+              <input type="time" id="horarioFim" required>
             </div>
           </div>
 
           <div class="input-group">
             <label>Motivo (opcional)</label>
-            <input type="text" id="bloqHorMotivo" placeholder="Ex: Reunião, Almoço estendido...">
+            <input type="text" id="motivoHorario" placeholder="Ex: Reunião, Compromisso">
           </div>
 
           <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button type="button" class="btn btn-secondary" id="cancelarBtn">
+              Cancelar
+            </button>
             <button type="submit" class="btn btn-primary" style="flex: 1;">
               ⏰ Bloquear Horário
-            </button>
-            <button type="button" class="btn btn-secondary" id="bloqHorCancelar">
-              Cancelar
             </button>
           </div>
         </form>
@@ -244,50 +262,44 @@ export class BloqueiosPage {
 
     modal.render()
 
+    document.getElementById('cancelarBtn').addEventListener('click', () => {
+      modal.close()
+    })
+
     document.getElementById('formBloquearHorario').addEventListener('submit', async (e) => {
       e.preventDefault()
       
-      const data = document.getElementById('bloqHorData').value
-      const inicio = document.getElementById('bloqHorInicio').value
-      const fim = document.getElementById('bloqHorFim').value
-      const motivo = document.getElementById('bloqHorMotivo').value
+      const data = document.getElementById('dataHorario').value
+      const horarioInicio = document.getElementById('horarioInicio').value
+      const horarioFim = document.getElementById('horarioFim').value
+      const motivo = document.getElementById('motivoHorario').value
 
-      // Validar horários
-      if (inicio >= fim) {
-        alert('⚠️ Horário de início deve ser antes do horário de fim!')
+      if (horarioInicio >= horarioFim) {
+        alert('⚠️ Horário de início deve ser antes do fim')
         return
       }
 
+      const submitBtn = e.target.querySelector('button[type="submit"]')
+      submitBtn.disabled = true
+      submitBtn.textContent = 'Bloqueando...'
+
       const { error } = await bloqueioService.bloquearHorario(
-        data, inicio, fim, motivo, this.user.id
+        data, 
+        horarioInicio, 
+        horarioFim, 
+        motivo || null
       )
 
       if (error) {
-        alert('❌ Erro ao bloquear horário: ' + error.message)
+        alert('❌ Erro ao bloquear horário')
+        submitBtn.disabled = false
+        submitBtn.textContent = '⏰ Bloquear Horário'
         return
       }
 
       alert('✅ Horário bloqueado com sucesso!')
       modal.close()
-      await this.carregarBloqueios()
+      this.render()
     })
-
-    document.getElementById('bloqHorCancelar').addEventListener('click', () => {
-      modal.close()
-    })
-  }
-
-  async removerBloqueio(id) {
-    if (!confirm('Tem certeza que deseja remover este bloqueio?')) return
-
-    const { error } = await bloqueioService.remove(id)
-
-    if (error) {
-      alert('❌ Erro ao remover bloqueio: ' + error.message)
-      return
-    }
-
-    alert('✅ Bloqueio removido com sucesso!')
-    await this.carregarBloqueios()
   }
 }

@@ -151,15 +151,26 @@ export class MeusAgendamentosPage {
       </div>
 
       ${isProximo && agendamento.status === 'ativo' ? `
-        <button class="btn btn-danger" style="width: 100%;" data-id="${agendamento.id}">
-          Cancelar Agendamento
-        </button>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn btn-secondary" style="flex: 1;" data-id="${agendamento.id}" data-action="editar">
+            ✏️ Editar
+          </button>
+          <button class="btn btn-danger" style="flex: 1;" data-id="${agendamento.id}" data-action="cancelar">
+            🚫 Cancelar
+          </button>
+        </div>
       ` : ''}
     `
 
     if (isProximo && agendamento.status === 'ativo') {
-      const cancelBtn = card.querySelector('button[data-id]')
-      cancelBtn.addEventListener('click', () => {
+      const editarBtn = card.querySelector('button[data-action="editar"]')
+      const cancelarBtn = card.querySelector('button[data-action="cancelar"]')
+      
+      editarBtn?.addEventListener('click', () => {
+        this.mostrarModalEditar(agendamento)
+      })
+      
+      cancelarBtn?.addEventListener('click', () => {
         this.confirmarCancelamento(agendamento)
       })
     }
@@ -215,6 +226,79 @@ export class MeusAgendamentosPage {
         return
       }
 
+      modal.close()
+      this.render()
+    })
+  }
+
+  mostrarModalEditar(agendamento) {
+    const modal = new Modal(
+      'Editar Agendamento',
+      `
+        <form id="formEditarAgendamento" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="card" style="background: var(--background-dark); margin-bottom: 16px;">
+            <div style="font-weight: 600; margin-bottom: 8px;">${agendamento.servico}</div>
+            <div style="color: var(--text-secondary); font-size: 14px;">
+              ${capitalize(formatarData(agendamento.data))} • ${agendamento.horario_inicio} - ${agendamento.horario_fim}
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Observações</label>
+            <textarea 
+              id="observacoesEdit" 
+              rows="4" 
+              placeholder="Adicione ou edite observações sobre o agendamento..."
+            >${agendamento.observacoes_cliente || ''}</textarea>
+            <small style="color: var(--text-muted); margin-top: 4px;">
+              Use este campo para informar preferências, detalhes ou pedidos especiais.
+            </small>
+          </div>
+
+          <div class="alert" style="background: var(--warning)20; color: var(--warning); padding: 12px; border-radius: 8px; font-size: 14px;">
+            ℹ️ Para alterar data ou horário, cancele este agendamento e crie um novo.
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button type="button" class="btn btn-secondary" id="modalCancelEditBtn" style="flex: 1;">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+              💾 Salvar
+            </button>
+          </div>
+        </form>
+      `,
+      null
+    )
+
+    modal.render()
+
+    document.getElementById('modalCancelEditBtn').addEventListener('click', () => {
+      modal.close()
+    })
+
+    document.getElementById('formEditarAgendamento').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      
+      const observacoes = document.getElementById('observacoesEdit').value.trim()
+      const submitBtn = e.target.querySelector('button[type="submit"]')
+      
+      submitBtn.disabled = true
+      submitBtn.textContent = 'Salvando...'
+
+      const { error } = await agendamentoService.update(agendamento.id, {
+        observacoes_cliente: observacoes || null
+      })
+
+      if (error) {
+        alert('❌ Erro ao atualizar. Tente novamente.')
+        submitBtn.disabled = false
+        submitBtn.textContent = '💾 Salvar'
+        return
+      }
+
+      alert('✅ Agendamento atualizado!')
       modal.close()
       this.render()
     })
