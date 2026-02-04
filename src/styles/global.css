@@ -597,6 +597,8 @@ body {
 .main-content {
   margin-left: 280px;
   min-height: 100vh;
+  overflow-x: visible;
+  width: auto;
 }
 
 /* Empty state */

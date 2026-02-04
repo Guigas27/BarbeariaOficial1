@@ -15,9 +15,9 @@ export class AgendarAdminPage {
 
   async render() {
     this.container.innerHTML = `
-      <div style="padding: 40px 20px; width: 100%; overflow: visible;">
+      <div style="padding: 40px 20px 40px 300px; width: 100%;">
         <div style="max-width: 1400px; margin: 0 auto;">
-          <h1 style="font-size: 28px; margin-bottom: 32px; min-width: 200px;">Agendar (Admin)</h1>
+          <h1 style="font-size: 28px; margin-bottom: 32px; display: block; width: 100%;">Agendar (Admin)</h1>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
             <div class="card" style="height: fit-content;">
@@ -40,6 +40,9 @@ export class AgendarAdminPage {
         @media (max-width: 1024px) {
           [style*="grid-template-columns: 1fr 1fr"] {
             grid-template-columns: 1fr !important;
+          }
+          [style*="padding-left: 300px"] {
+            padding-left: 20px !important;
           }
         }
       </style>

@@ -11,18 +11,17 @@ export class BloqueiosPage {
 
   async render() {
     this.container.innerHTML = `
-      <div style="padding: 40px 20px; width: 100%; overflow: visible;">
+      <div style="padding: 40px 20px 40px 300px; width: 100%;">
         <div style="max-width: 1200px; margin: 0 auto;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
-            <h1 style="font-size: 28px; margin: 0; color: var(--text-primary); min-width: 250px;">Gerenciar Bloqueios</h1>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-              <button class="btn btn-primary" id="btnBloquearDia" style="white-space: nowrap;">
-                🚫 Bloquear Dia Inteiro
-              </button>
-              <button class="btn btn-secondary" id="btnBloquearHorario" style="white-space: nowrap;">
-                ⏰ Bloquear Horário
-              </button>
-            </div>
+          <h1 style="font-size: 28px; margin: 0 0 32px 0; color: var(--text-primary); display: block; width: 100%;">Gerenciar Bloqueios</h1>
+          
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 32px; gap: 12px; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btnBloquearDia" style="white-space: nowrap;">
+              🚫 Bloquear Dia Inteiro
+            </button>
+            <button class="btn btn-secondary" id="btnBloquearHorario" style="white-space: nowrap;">
+              ⏰ Bloquear Horário
+            </button>
           </div>
 
           <div class="card">
