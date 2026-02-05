@@ -248,6 +248,7 @@ function verificarPeriodoBloqueado(data, horarioInicio, horarioFim, bloqueios) {
 }
 
 // Verificar se um período tem agendamento (parcial ou total)
+// VALIDAÇÃO RIGOROSA: Verifica cada intervalo de 30min
 function verificarPeriodoAgendado(data, horarioInicio, horarioFim, agendamentos) {
   if (!agendamentos || agendamentos.length === 0) return false
 
@@ -257,23 +258,39 @@ function verificarPeriodoAgendado(data, horarioInicio, horarioFim, agendamentos)
   const inicioMinutos = inicioHora * 60 + inicioMin
   const fimMinutos = fimHora * 60 + fimMin
 
-  return agendamentos.some(ag => {
-    // Ignora agendamentos cancelados
-    if (ag.status === 'cancelado') return false
+  // VALIDAÇÃO INTERVALO POR INTERVALO (a cada 30min)
+  for (let minAtual = inicioMinutos; minAtual < fimMinutos; minAtual += 30) {
+    const minProx = minAtual + 30
     
-    // Verifica se é da mesma data
-    if (ag.data !== data) return false
+    const conflito = agendamentos.some(ag => {
+      // Ignora agendamentos cancelados
+      if (ag.status === 'cancelado') return false
+      
+      // Verifica se é da mesma data
+      if (ag.data !== data) return false
 
-    const [agInicioHora, agInicioMin] = ag.horario_inicio.split(':').map(Number)
-    const [agFimHora, agFimMin] = ag.horario_fim.split(':').map(Number)
-    const agInicioMinutos = agInicioHora * 60 + agInicioMin
-    const agFimMinutos = agFimHora * 60 + agFimMin
+      const [agInicioHora, agInicioMin] = ag.horario_inicio.split(':').map(Number)
+      const [agFimHora, agFimMin] = ag.horario_fim.split(':').map(Number)
+      const agInicioMinutos = agInicioHora * 60 + agInicioMin
+      const agFimMinutos = agFimHora * 60 + agFimMin
 
-    // Verifica se há QUALQUER sobreposição
-    return (
-      (agInicioMinutos < fimMinutos && agFimMinutos > inicioMinutos)
-    )
-  })
+      // Verifica se o intervalo atual (30min) conflita com o agendamento
+      return (
+        // Intervalo começa durante agendamento
+        (minAtual >= agInicioMinutos && minAtual < agFimMinutos) ||
+        // Intervalo termina durante agendamento  
+        (minProx > agInicioMinutos && minProx <= agFimMinutos) ||
+        // Intervalo engloba agendamento
+        (minAtual <= agInicioMinutos && minProx >= agFimMinutos) ||
+        // Horários exatamente iguais
+        (minAtual === agInicioMinutos && minProx === agFimMinutos)
+      )
+    })
+    
+    if (conflito) return true
+  }
+
+  return false
 }
 
 // Verificar se uma data tem horários disponíveis (considerando agendamentos existentes)
