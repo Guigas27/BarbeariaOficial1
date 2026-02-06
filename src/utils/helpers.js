@@ -120,6 +120,12 @@ export function gerarHorariosDisponiveis(date, duracaoServico, bloqueios = [], a
     const minuto = currentMinutos % 60
     const horarioStr = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`
 
+    // REGRA: Serviços de 60min só podem começar em horários exatos (09:00, 10:00, 11:00...)
+    if (duracaoServico >= 60 && minuto !== 0) {
+      currentMinutos += 30
+      continue
+    }
+
     // Calcular horário de fim do slot
     const fimSlotMinutos = currentMinutos + duracaoServico
     const horaFimSlot = Math.floor(fimSlotMinutos / 60)
