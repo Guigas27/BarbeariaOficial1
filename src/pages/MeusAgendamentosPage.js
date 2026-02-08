@@ -43,80 +43,91 @@ export class MeusAgendamentosPage {
   async carregarAgendamentos() {
     const container = document.getElementById('agendamentosContainer')
     
-    const { data, error } = await agendamentoService.getByUser(this.user.id)
+    try {
+      const { data, error } = await agendamentoService.getByUser(this.user.id)
 
-    if (error) {
+      if (error) {
+        console.error('Erro ao carregar agendamentos:', error)
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">Erro ao carregar</div>
+            <div class="empty-state-text">Tente novamente mais tarde</div>
+          </div>
+        `
+        return
+      }
+
+      this.agendamentos = data || []
+
+      // Separar por status e data
+      const proximos = this.agendamentos
+        .filter(ag => ag.status === 'ativo' && new Date(ag.data + 'T00:00:00') >= new Date())
+        .sort((a, b) => {
+          const dataA = new Date(a.data + 'T' + a.horario_inicio)
+          const dataB = new Date(b.data + 'T' + b.horario_inicio)
+          return dataA - dataB
+        })
+
+      const historico = this.agendamentos
+        .filter(ag => ag.status !== 'ativo' || new Date(ag.data + 'T00:00:00') < new Date())
+        .sort((a, b) => {
+          const dataA = new Date(a.data + 'T' + a.horario_inicio)
+          const dataB = new Date(b.data + 'T' + b.horario_inicio)
+          return dataB - dataA
+        })
+
+      if (this.agendamentos.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <div class="empty-state-title">Nenhum agendamento</div>
+            <div class="empty-state-text">Você ainda não possui agendamentos</div>
+            <a href="#/agendar" class="btn btn-primary" style="margin-top: 24px;">
+              Fazer Agendamento
+            </a>
+          </div>
+        `
+        return
+      }
+
+      container.innerHTML = `
+        ${proximos.length > 0 ? `
+          <div style="margin-bottom: 32px;">
+            <h2 style="font-size: 20px; margin-bottom: 16px; color: var(--primary-gold);">Próximos</h2>
+            <div id="proximosContainer" style="display: grid; gap: 16px;"></div>
+          </div>
+        ` : ''}
+
+        ${historico.length > 0 ? `
+          <div>
+            <h2 style="font-size: 20px; margin-bottom: 16px; color: var(--text-secondary);">Histórico</h2>
+            <div id="historicoContainer" style="display: grid; gap: 16px;"></div>
+          </div>
+        ` : ''}
+      `
+
+      proximos.forEach(ag => this.renderAgendamento(ag, true))
+      historico.forEach(ag => this.renderAgendamento(ag, false))
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos:', error)
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">⚠️</div>
           <div class="empty-state-title">Erro ao carregar</div>
-          <div class="empty-state-text">Tente novamente mais tarde</div>
+          <div class="empty-state-text">${error.message || 'Erro desconhecido'}</div>
         </div>
       `
-      return
-    }
-
-    this.agendamentos = data || []
-
-    // Separar por status e data
-    const proximos = this.agendamentos
-      .filter(ag => ag.status === 'ativo' && new Date(ag.data + 'T00:00:00') >= new Date())
-      .sort((a, b) => {
-        const dataA = new Date(a.data + 'T' + a.horario_inicio)
-        const dataB = new Date(b.data + 'T' + b.horario_inicio)
-        return dataA - dataB
-      })
-
-    const historico = this.agendamentos
-      .filter(ag => ag.status !== 'ativo' || new Date(ag.data + 'T00:00:00') < new Date())
-      .sort((a, b) => {
-        const dataA = new Date(a.data + 'T' + a.horario_inicio)
-        const dataB = new Date(b.data + 'T' + b.horario_inicio)
-        return dataB - dataA
-      })
-
-    if (this.agendamentos.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">📅</div>
-          <div class="empty-state-title">Nenhum agendamento</div>
-          <div class="empty-state-text">Você ainda não tem agendamentos. Clique no botão acima para criar seu primeiro agendamento.</div>
-        </div>
-      `
-      return
-    }
-
-    container.innerHTML = `
-      ${proximos.length > 0 ? `
-        <div style="margin-bottom: 40px;">
-          <h2 style="margin-bottom: 20px; color: var(--primary-gold);">Próximos Agendamentos</h2>
-          <div class="grid" id="proximosGrid"></div>
-        </div>
-      ` : ''}
-
-      ${historico.length > 0 ? `
-        <div>
-          <h2 style="margin-bottom: 20px;">Histórico</h2>
-          <div class="grid" id="historicoGrid"></div>
-        </div>
-      ` : ''}
-    `
-
-    if (proximos.length > 0) {
-      const proximosGrid = document.getElementById('proximosGrid')
-      proximos.forEach(ag => this.renderAgendamento(proximosGrid, ag, true))
-    }
-
-    if (historico.length > 0) {
-      const historicoGrid = document.getElementById('historicoGrid')
-      historico.forEach(ag => this.renderAgendamento(historicoGrid, ag, false))
     }
   }
 
-  renderAgendamento(container, agendamento, isProximo) {
+  renderAgendamento(agendamento, isProximo) {
+    const containerId = isProximo ? 'proximosContainer' : 'historicoContainer'
+    const container = document.getElementById(containerId)
+    if (!container) return
+
     const card = document.createElement('div')
     card.className = 'card'
-    card.style.position = 'relative'
     
     card.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
@@ -152,10 +163,10 @@ export class MeusAgendamentosPage {
 
       ${isProximo && agendamento.status === 'ativo' ? `
         <div style="display: flex; gap: 12px;">
-          <button class="btn btn-secondary" style="flex: 1;" data-id="${agendamento.id}" data-action="editar">
+          <button class="btn btn-secondary btn-editar" data-id="${agendamento.id}" style="flex: 1;">
             ✏️ Editar
           </button>
-          <button class="btn btn-danger" style="flex: 1;" data-id="${agendamento.id}" data-action="cancelar">
+          <button class="btn btn-danger btn-cancelar" data-id="${agendamento.id}" style="flex: 1;">
             🚫 Cancelar
           </button>
         </div>
@@ -163,14 +174,14 @@ export class MeusAgendamentosPage {
     `
 
     if (isProximo && agendamento.status === 'ativo') {
-      const editarBtn = card.querySelector('button[data-action="editar"]')
-      const cancelarBtn = card.querySelector('button[data-action="cancelar"]')
+      const editarBtn = card.querySelector('.btn-editar')
+      const cancelarBtn = card.querySelector('.btn-cancelar')
       
-      editarBtn?.addEventListener('click', () => {
+      editarBtn.addEventListener('click', () => {
         this.mostrarModalEditar(agendamento)
       })
       
-      cancelarBtn?.addEventListener('click', () => {
+      cancelarBtn.addEventListener('click', () => {
         this.confirmarCancelamento(agendamento)
       })
     }
@@ -191,9 +202,6 @@ export class MeusAgendamentosPage {
             ${capitalize(formatarData(agendamento.data))} às ${agendamento.horario_inicio}
           </div>
         </div>
-        <p style="margin-bottom: 24px; color: var(--error); font-size: 14px;">
-          Esta ação não pode ser desfeita.
-        </p>
         <div style="display: flex; gap: 12px;">
           <button class="btn btn-secondary" id="modalCancelBtn" style="flex: 1;">
             Não, manter
@@ -214,20 +222,41 @@ export class MeusAgendamentosPage {
 
     document.getElementById('modalConfirmBtn').addEventListener('click', async () => {
       const confirmBtn = document.getElementById('modalConfirmBtn')
-      confirmBtn.disabled = true
-      confirmBtn.textContent = 'Cancelando...'
+      const originalText = confirmBtn.textContent
+      
+      try {
+        confirmBtn.disabled = true
+        confirmBtn.textContent = 'Cancelando...'
 
-      const { error } = await agendamentoService.cancel(agendamento.id)
+        const { data, error } = await agendamentoService.cancel(agendamento.id)
 
-      if (error) {
-        alert('Erro ao cancelar agendamento. Tente novamente.')
+        if (error) {
+          console.error('Erro completo:', error)
+          
+          let mensagemErro = 'Erro desconhecido'
+          if (error.message) {
+            mensagemErro = error.message
+          } else if (typeof error === 'string') {
+            mensagemErro = error
+          } else if (error.toString && error.toString() !== '[object Object]') {
+            mensagemErro = error.toString()
+          }
+          
+          alert('❌ Erro ao cancelar agendamento:\n\n' + mensagemErro + '\n\nTente novamente ou contate o suporte.')
+          confirmBtn.disabled = false
+          confirmBtn.textContent = originalText
+          return
+        }
+
+        alert('✅ Agendamento cancelado com sucesso!')
+        modal.close()
+        this.render()
+      } catch (error) {
+        console.error('Erro ao cancelar:', error)
+        alert('❌ Erro ao cancelar agendamento.\n\nVerifique o console (F12) para mais detalhes.')
         confirmBtn.disabled = false
-        confirmBtn.textContent = 'Sim, cancelar'
-        return
+        confirmBtn.textContent = originalText
       }
-
-      modal.close()
-      this.render()
     })
   }
 
@@ -283,24 +312,41 @@ export class MeusAgendamentosPage {
       
       const observacoes = document.getElementById('observacoesEdit').value.trim()
       const submitBtn = e.target.querySelector('button[type="submit"]')
+      const originalText = submitBtn.textContent
       
-      submitBtn.disabled = true
-      submitBtn.textContent = 'Salvando...'
+      try {
+        submitBtn.disabled = true
+        submitBtn.textContent = 'Salvando...'
 
-      const { error } = await agendamentoService.update(agendamento.id, {
-        observacoes_cliente: observacoes || null
-      })
+        const { data, error } = await agendamentoService.update(agendamento.id, {
+          observacoes_cliente: observacoes || null
+        })
 
-      if (error) {
-        alert('❌ Erro ao atualizar. Tente novamente.')
+        if (error) {
+          console.error('Erro completo:', error)
+          
+          let mensagemErro = 'Erro desconhecido'
+          if (error.message) {
+            mensagemErro = error.message
+          } else if (typeof error === 'string') {
+            mensagemErro = error
+          }
+          
+          alert('❌ Erro ao atualizar:\n\n' + mensagemErro)
+          submitBtn.disabled = false
+          submitBtn.textContent = originalText
+          return
+        }
+
+        alert('✅ Agendamento atualizado!')
+        modal.close()
+        this.render()
+      } catch (error) {
+        console.error('Erro ao atualizar:', error)
+        alert('❌ Erro ao atualizar agendamento.')
         submitBtn.disabled = false
-        submitBtn.textContent = '💾 Salvar'
-        return
+        submitBtn.textContent = originalText
       }
-
-      alert('✅ Agendamento atualizado!')
-      modal.close()
-      this.render()
     })
   }
 }

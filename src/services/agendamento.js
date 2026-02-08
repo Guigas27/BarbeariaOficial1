@@ -18,13 +18,14 @@ export const agendamentoService = {
           status: 'ativo'
         })
         .select()
-        .single()
 
       if (error) throw error
-      return { data, error: null }
+      
+      // Retornar primeiro item ou null
+      return { data: data?.[0] || data, error: null }
     } catch (error) {
       console.error('Erro ao criar agendamento:', error)
-      return { data: null, error }
+      return { data: null, error: { message: error.message || 'Erro ao criar agendamento' } }
     }
   },
 
@@ -126,36 +127,46 @@ export const agendamentoService = {
   // Cancelar agendamento
   async cancel(id) {
     try {
+      if (!id) {
+        throw new Error('ID do agendamento é obrigatório')
+      }
+
       const { data, error } = await supabase
         .from('agendamentos')
         .update({ status: 'cancelado' })
         .eq('id', id)
         .select()
-        .single()
 
       if (error) throw error
-      return { data, error: null }
+      
+      // Retornar primeiro item ou null
+      return { data: data?.[0] || data, error: null }
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error)
-      return { data: null, error }
+      return { data: null, error: { message: error.message || 'Erro ao cancelar agendamento' } }
     }
   },
 
   // Editar agendamento (admin)
   async update(id, updates) {
     try {
+      if (!id) {
+        throw new Error('ID do agendamento é obrigatório')
+      }
+
       const { data, error } = await supabase
         .from('agendamentos')
         .update(updates)
         .eq('id', id)
         .select()
-        .single()
 
       if (error) throw error
-      return { data, error: null }
+      
+      // Retornar primeiro item ou null
+      return { data: data?.[0] || data, error: null }
     } catch (error) {
       console.error('Erro ao atualizar agendamento:', error)
-      return { data: null, error }
+      return { data: null, error: { message: error.message || 'Erro ao atualizar agendamento' } }
     }
   },
 

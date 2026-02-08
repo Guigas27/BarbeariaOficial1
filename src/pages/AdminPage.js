@@ -500,13 +500,20 @@ export class AdminPage {
   async cancelarAgendamento(ag) {
     if (!confirm('Tem certeza que deseja cancelar este agendamento?')) return
 
-    const { error } = await agendamentoService.cancel(ag.id)
-
-    if (error) {
-      alert('Erro ao cancelar agendamento')
+    if (!ag || !ag.id) {
+      alert('❌ Erro: Agendamento inválido')
       return
     }
 
+    const { error } = await agendamentoService.cancel(ag.id)
+
+    if (error) {
+      console.error('Erro ao cancelar:', error)
+      alert(`❌ Erro ao cancelar agendamento: ${error.message || 'Tente novamente'}`)
+      return
+    }
+
+    alert('✅ Agendamento cancelado com sucesso!')
     this.render()
   }
 
@@ -604,6 +611,16 @@ export class AdminPage {
         ag.horario_fim !== novosDados.horario_fim
 
       if (mudouHorario) {
+        // VALIDAÇÃO: Serviços 60min só em horários exatos
+        const [horaInicio, minInicio] = novosDados.horario_inicio.split(':').map(Number)
+        const [horaFim, minFim] = novosDados.horario_fim.split(':').map(Number)
+        const duracaoMinutos = (horaFim * 60 + minFim) - (horaInicio * 60 + minInicio)
+        
+        if (duracaoMinutos >= 60 && minInicio !== 0) {
+          alert('⚠️ Serviços de 60 minutos ou mais só podem começar em horários exatos (09:00, 10:00, 11:00...)!\n\nHorário tentado: ' + novosDados.horario_inicio)
+          return
+        }
+
         // Verificar conflitos (excluindo o próprio agendamento)
         const { data: conflitos } = await agendamentoService.getByDate(novosDados.data)
         
