@@ -500,20 +500,13 @@ export class AdminPage {
   async cancelarAgendamento(ag) {
     if (!confirm('Tem certeza que deseja cancelar este agendamento?')) return
 
-    if (!ag || !ag.id) {
-      alert('❌ Erro: Agendamento inválido')
-      return
-    }
-
     const { error } = await agendamentoService.cancel(ag.id)
 
     if (error) {
-      console.error('Erro ao cancelar:', error)
-      alert(`❌ Erro ao cancelar agendamento: ${error.message || 'Tente novamente'}`)
+      alert('Erro ao cancelar agendamento')
       return
     }
 
-    alert('✅ Agendamento cancelado com sucesso!')
     this.render()
   }
 

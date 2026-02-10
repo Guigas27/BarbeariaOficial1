@@ -4,6 +4,43 @@ export const agendamentoService = {
   // Criar novo agendamento
   async create(agendamento) {
     try {
+      // ── VALIDAÇÃO PRÉVIA: verificar conflito antes de salvar ──
+      const { data: existentes } = await supabase
+        .from('agendamentos')
+        .select('id, horario_inicio, horario_fim, nome_cliente')
+        .eq('data', agendamento.data)
+        .eq('status', 'ativo')
+
+      if (existentes && existentes.length > 0) {
+        const [hIni, mIni] = agendamento.horario_inicio.split(':').map(Number)
+        const [hFim, mFim] = agendamento.horario_fim.split(':').map(Number)
+        const novoIni = hIni * 60 + mIni
+        const novoFim = hFim * 60 + mFim
+
+        const conflito = existentes.find(ex => {
+          const [exHIni, exMIni] = ex.horario_inicio.split(':').map(Number)
+          const [exHFim, exMFim] = ex.horario_fim.split(':').map(Number)
+          const exIni = exHIni * 60 + exMIni
+          const exFim = exHFim * 60 + exMFim
+
+          return (
+            (novoIni >= exIni && novoIni < exFim) ||
+            (novoFim > exIni && novoFim <= exFim) ||
+            (novoIni <= exIni && novoFim >= exFim)
+          )
+        })
+
+        if (conflito) {
+          return {
+            data: null,
+            error: {
+              message: `Horário ${agendamento.horario_inicio} já está ocupado por ${conflito.nome_cliente}. Escolha outro horário.`
+            }
+          }
+        }
+      }
+      // ── FIM DA VALIDAÇÃO PRÉVIA ──
+
       const { data, error } = await supabase
         .from('agendamentos')
         .insert({
@@ -18,14 +55,15 @@ export const agendamentoService = {
           status: 'ativo'
         })
         .select()
+        .single()
 
       if (error) throw error
-      
-      // Retornar primeiro item ou null
-      return { data: data?.[0] || data, error: null }
+      return { data, error: null }
     } catch (error) {
       console.error('Erro ao criar agendamento:', error)
-      return { data: null, error: { message: error.message || 'Erro ao criar agendamento' } }
+      // Extrair mensagem legível do erro do Supabase/trigger
+      const mensagem = error?.message || error?.details || error?.hint || 'Erro ao criar agendamento'
+      return { data: null, error: { message: mensagem } }
     }
   },
 
@@ -127,46 +165,37 @@ export const agendamentoService = {
   // Cancelar agendamento
   async cancel(id) {
     try {
-      if (!id) {
-        throw new Error('ID do agendamento é obrigatório')
-      }
-
       const { data, error } = await supabase
         .from('agendamentos')
         .update({ status: 'cancelado' })
         .eq('id', id)
         .select()
+        .single()
 
       if (error) throw error
-      
-      // Retornar primeiro item ou null
-      return { data: data?.[0] || data, error: null }
+      return { data, error: null }
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error)
-      return { data: null, error: { message: error.message || 'Erro ao cancelar agendamento' } }
+      const mensagem = error?.message || error?.details || error?.hint || 'Erro ao cancelar agendamento'
+      return { data: null, error: { message: mensagem } }
     }
   },
 
   // Editar agendamento (admin)
   async update(id, updates) {
     try {
-      if (!id) {
-        throw new Error('ID do agendamento é obrigatório')
-      }
-
       const { data, error } = await supabase
         .from('agendamentos')
         .update(updates)
         .eq('id', id)
         .select()
+        .single()
 
       if (error) throw error
-      
-      // Retornar primeiro item ou null
-      return { data: data?.[0] || data, error: null }
+      return { data, error: null }
     } catch (error) {
       console.error('Erro ao atualizar agendamento:', error)
-      return { data: null, error: { message: error.message || 'Erro ao atualizar agendamento' } }
+      return { data: null, error }
     }
   },
 
